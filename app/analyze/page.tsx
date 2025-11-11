@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { PropertyForm } from "@/components/PropertyForm"
 import { DecisionCard } from "@/components/DecisionCard"
 import { KpiTiles } from "@/components/KpiTiles"
@@ -8,15 +9,24 @@ import { DriversList } from "@/components/DriversList"
 import { AssumptionsPanel } from "@/components/AssumptionsPanel"
 import { WarningsAlert } from "@/components/WarningsAlert"
 import { ExplanationsPanel } from "@/components/ExplanationsPanel"
+import { SaveAnalysisButton } from "@/components/SaveAnalysisButton"
+import { Button } from "@/components/ui/button"
 import type { PropertyPayload, PredictionResponse } from "@/lib/schemas"
 
 export default function AnalyzePage() {
   const [result, setResult] = useState<PredictionResponse | null>(null)
+  const [payload, setPayload] = useState<PropertyPayload | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const router = useRouter()
 
-  const handleFormSubmit = (payload: PropertyPayload, result: PredictionResponse) => {
+  const handleFormSubmit = (formPayload: PropertyPayload, result: PredictionResponse) => {
+    setPayload(formPayload)
     setResult(result)
     setSubmitted(true)
+  }
+
+  const handleSaveSuccess = (analysisId: string) => {
+    router.push(`/analyses/${analysisId}`)
   }
 
   return (
@@ -32,8 +42,14 @@ export default function AnalyzePage() {
           </div>
 
           {/* Results Section */}
-          {submitted && result && (
+          {submitted && result && payload && (
             <div className="space-y-6">
+              <div className="flex gap-2">
+                <SaveAnalysisButton payload={payload} response={result} onSuccess={handleSaveSuccess} />
+                <Button variant="outline" onClick={() => setSubmitted(false)}>
+                  New Analysis
+                </Button>
+              </div>
               <DecisionCard prediction={result} />
               <KpiTiles prediction={result} />
               <DriversList drivers={result.drivers} />

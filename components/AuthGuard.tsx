@@ -4,25 +4,25 @@ import type React from "react"
 
 import { useAuth } from "@/lib/hooks-auth"
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Spinner } from "@/components/ui/spinner"
 
 interface AuthGuardProps {
   children: React.ReactNode
   requiredRole?: string
+  fallback?: React.ReactNode
 }
 
-export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
+export function AuthGuard({ children, requiredRole, fallback }: AuthGuardProps) {
   const { data, isLoading, error } = useAuth()
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    if (!isLoading && error) {
-      router.push(`/signin?next=${window.location.pathname}`)
-    }
-  }, [isLoading, error, router])
+    setMounted(true)
+  }, [])
 
-  if (isLoading) {
+  if (!mounted || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Spinner className="h-8 w-8" />
@@ -30,7 +30,18 @@ export function AuthGuard({ children, requiredRole }: AuthGuardProps) {
     )
   }
 
-  if (error || !data?.user) {
+  if (error) {
+    if (fallback) {
+      return <>{fallback}</>
+    }
+    router.push(`/signin?next=${encodeURIComponent(typeof window !== "undefined" ? window.location.pathname : "/")}`)
+    return null
+  }
+
+  if (!data?.user) {
+    if (fallback) {
+      return <>{fallback}</>
+    }
     return null
   }
 
