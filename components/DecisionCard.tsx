@@ -14,7 +14,7 @@ export function DecisionCard({ prediction }: DecisionCardProps) {
   return (
     <Card className={`p-8 text-center ${bgClass}`}>
       <h2 className="mb-4 text-2xl font-bold">Investment Decision</h2>
-      <Badge variant={badgeVariant} className="mb-6 text-lg px-4 py-2">
+      <Badge variant={badgeVariant} className="mb-6 text-lg px-4 py-2 mx-auto">
         {prediction.decision}
       </Badge>
       <div className="mt-6">

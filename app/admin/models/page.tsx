@@ -123,16 +123,16 @@ function ModelsContent() {
                   <div>
                     <h3 className="font-semibold text-lg">{model.name}</h3>
                     <p className="text-sm text-gray-600">Version: {model.version}</p>
-                    <p className="text-sm text-gray-600">Path: {model.path}</p>
+                    <p className="text-sm text-gray-600">Path: {model.path || "N/A"}</p>
                     <p className="text-xs text-gray-500 mt-1">{new Date(model.created_at).toLocaleDateString()}</p>
                   </div>
                   <div className="flex items-center gap-3">
-                    {model.is_active && (
+                    {model.active && (
                       <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                         Active
                       </span>
                     )}
-                    {!model.is_active && (
+                    {!model.active && (
                       <Button
                         size="sm"
                         onClick={() => handleActivate(model.id)}

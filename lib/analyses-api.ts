@@ -1,76 +1,62 @@
-import { generateRequestId } from "./api"
-import type { AnalysisPayload, Analysis, AnalysisList } from "./analyses-schemas"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1"
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || `API error: ${response.status}`)
-  }
-
-  return data as T
-}
+import { apiFetch } from "./api"
+import type {
+  AnalysisPayload,
+  Analysis,
+  AnalysisList,
+  AnalysisShare,
+  AnalysisShareList,
+  AnalysisComment,
+} from "./analyses-schemas"
 
 // Save new analysis
 export async function saveAnalysis(payload: AnalysisPayload): Promise<Analysis> {
-  const response = await fetch(`${API_BASE_URL}/analyses`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": generateRequestId(),
-    },
-    credentials: "include",
-    body: JSON.stringify(payload),
-  })
-
-  return handleResponse<Analysis>(response)
+  return apiFetch<Analysis>("/analyses", { method: "POST", json: payload })
 }
 
 // Get all analyses (paginated)
-export async function getAnalyses(page = 1, limit = 20): Promise<AnalysisList> {
-  const response = await fetch(`${API_BASE_URL}/analyses?page=${page}&limit=${limit}`, {
-    method: "GET",
-    credentials: "include",
-  })
-
-  return handleResponse<AnalysisList>(response)
+export async function getAnalyses(page = 1, pageSize = 20): Promise<AnalysisList> {
+  return apiFetch<AnalysisList>(`/analyses?page=${page}&page_size=${pageSize}`, { method: "GET" })
 }
 
 // Get single analysis by ID
 export async function getAnalysis(id: string): Promise<Analysis> {
-  const response = await fetch(`${API_BASE_URL}/analyses/${id}`, {
-    method: "GET",
-    credentials: "include",
-  })
-
-  return handleResponse<Analysis>(response)
+  return apiFetch<Analysis>(`/analyses/${id}`, { method: "GET" })
 }
 
 // Update analysis (title and notes)
 export async function updateAnalysis(id: string, data: { title?: string; notes?: string }): Promise<Analysis> {
-  const response = await fetch(`${API_BASE_URL}/analyses/${id}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": generateRequestId(),
-    },
-    credentials: "include",
-    body: JSON.stringify(data),
-  })
-
-  return handleResponse<Analysis>(response)
+  return apiFetch<Analysis>(`/analyses/${id}`, { method: "PUT", json: data })
 }
 
 // Delete analysis
 export async function deleteAnalysis(id: string): Promise<void> {
-  const response = await fetch(`${API_BASE_URL}/analyses/${id}`, {
-    method: "DELETE",
-    credentials: "include",
-  })
+  await apiFetch<void>(`/analyses/${id}`, { method: "DELETE" })
+}
 
-  if (!response.ok) {
-    throw new Error("Failed to delete analysis")
-  }
+export async function shareAnalysis(analysisId: string, payload: { message?: string }): Promise<AnalysisShare> {
+  return apiFetch<AnalysisShare>(`/analyses/${analysisId}/share`, { method: "POST", json: payload })
+}
+
+export async function getSharedAnalyses(): Promise<AnalysisShareList> {
+  return apiFetch<AnalysisShareList>("/analyses/shared", { method: "GET" })
+}
+
+export async function getShareComments(shareId: string): Promise<AnalysisComment[]> {
+  return apiFetch<AnalysisComment[]>(`/analyses/shares/${shareId}/comments`, { method: "GET" })
+}
+
+export async function addShareComment(shareId: string, body: string): Promise<AnalysisComment> {
+  return apiFetch<AnalysisComment>(`/analyses/shares/${shareId}/comments`, { method: "POST", json: { body } })
+}
+
+export async function deleteShareComment(shareId: string, commentId: string): Promise<void> {
+  await apiFetch<void>(`/analyses/shares/${shareId}/comments/${commentId}`, { method: "DELETE" })
+}
+
+export async function toggleShareCommentLike(shareId: string, commentId: string): Promise<AnalysisComment> {
+  return apiFetch<AnalysisComment>(`/analyses/shares/${shareId}/comments/${commentId}/like`, { method: "POST" })
+}
+
+export async function getShare(shareId: string): Promise<AnalysisShare> {
+  return apiFetch<AnalysisShare>(`/analyses/shares/${shareId}`, { method: "GET" })
 }

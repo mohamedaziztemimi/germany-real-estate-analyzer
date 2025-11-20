@@ -5,7 +5,7 @@ export const userSchema = z.object({
   id: z.string(),
   email: z.string(),
   role: z.enum(["user", "admin"]),
-  created_at: z.string(),
+  created_at: z.string().optional(),
 })
 
 export const usersListSchema = z.object({
@@ -18,8 +18,8 @@ export const modelSchema = z.object({
   id: z.string(),
   name: z.string(),
   version: z.string(),
-  path: z.string(),
-  is_active: z.boolean(),
+  path: z.string().optional().nullable(),
+  active: z.boolean(),
   created_at: z.string(),
 })
 
@@ -31,7 +31,8 @@ export const modelsListSchema = z.object({
 export const createModelSchema = z.object({
   name: z.string().min(1, "Name is required"),
   version: z.string().min(1, "Version is required"),
-  path: z.string().min(1, "Path is required"),
+  path: z.string().optional(),
+  active: z.boolean().optional(),
 })
 
 // Predictions tracking
@@ -47,6 +48,8 @@ export const predictionLogSchema = z.object({
 export const predictionsListSchema = z.object({
   predictions: z.array(predictionLogSchema),
   total: z.number(),
+  page: z.number().optional(),
+  page_size: z.number().optional(),
 })
 
 export type User = z.infer<typeof userSchema>

@@ -11,17 +11,15 @@ export const chatMessageSchema = z.object({
 
 // Chat request schema for backend
 export const chatRequestSchema = z.object({
+  session_id: z.string().min(1, "Session ID is required"),
   message: z.string().min(1, "Message cannot be empty"),
-  prediction_id: z.string().optional(),
-  conversation_history: z.array(chatMessageSchema).optional(),
+  context: z.record(z.any()).optional(),
 })
 
 // Chat response schema from backend
 export const chatResponseSchema = z.object({
-  response: z.string(),
-  suggested_questions: z.array(z.string()).optional(),
-  request_id: z.string(),
-  timestamp: z.string(),
+  reply: z.string(),
+  meta: z.record(z.any()).nullable().optional(),
 })
 
 // Local chat state

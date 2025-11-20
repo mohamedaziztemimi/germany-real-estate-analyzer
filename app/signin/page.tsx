@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,10 @@ export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { mutate, isPending, error } = useSignInMutation()
+  const forgotPasswordHref = useMemo(
+    () => (email ? `/forgot-password?email=${encodeURIComponent(email)}` : "/forgot-password"),
+    [email],
+  )
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +57,12 @@ export default function SignInPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Password</Label>
+                <Link href={forgotPasswordHref} className="text-sm text-blue-600 hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
               <Input
                 id="password"
                 type="password"

@@ -1,75 +1,58 @@
-import { generateRequestId } from "./api"
+import { apiFetch } from "./api"
 import type { User, Model, CreateModel, UsersList, ModelsList, PredictionsList } from "./admin-schemas"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1"
-
-async function handleResponse<T>(response: Response): Promise<T> {
-  const data = await response.json()
-
-  if (!response.ok) {
-    throw new Error(data.error?.message || `API error: ${response.status}`)
-  }
-
-  return data as T
-}
 
 // Users
 export async function getUsers(): Promise<UsersList> {
-  const response = await fetch(`${API_BASE_URL}/admin/users`, {
-    method: "GET",
-    credentials: "include",
-  })
-  return handleResponse<UsersList>(response)
+  const data = await apiFetch<any>("/admin/users", { method: "GET" })
+  const users = Array.isArray(data) ? data : data?.users ?? data?.items ?? []
+  const total = typeof data?.total === "number" ? data.total : users.length
+  return { users, total }
 }
 
 export async function updateUserRole(userId: string, role: "user" | "admin"): Promise<User> {
-  const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/role`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": generateRequestId(),
-    },
-    credentials: "include",
-    body: JSON.stringify({ role }),
-  })
-  return handleResponse<User>(response)
+  return apiFetch<User>(`/admin/users/${userId}/role`, { method: "PUT", json: { role } })
+}
+
+export async function createUser(data: { email: string; password: string; role: "user" | "admin" }): Promise<User> {
+  return apiFetch<User>("/admin/users", { method: "POST", json: data })
+}
+
+export async function updateUser(userId: string, data: { email?: string; role?: "user" | "admin" }): Promise<User> {
+  return apiFetch<User>(`/admin/users/${userId}`, { method: "PUT", json: data })
+}
+
+export async function deleteUser(userId: string): Promise<void> {
+  await apiFetch(`/admin/users/${userId}`, { method: "DELETE" })
 }
 
 // Models
 export async function getModels(): Promise<ModelsList> {
-  const response = await fetch(`${API_BASE_URL}/admin/models`, {
-    method: "GET",
-    credentials: "include",
-  })
-  return handleResponse<ModelsList>(response)
+  const data = await apiFetch<any>("/admin/models", { method: "GET" })
+  const models: Model[] = (Array.isArray(data) ? data : data?.models ?? data?.items ?? []).map((model: any) => ({
+    ...model,
+    active: Boolean(model?.active),
+  }))
+  const total = typeof data?.total === "number" ? data.total : models.length
+  return { models, total }
 }
 
 export async function createModel(data: CreateModel): Promise<Model> {
-  const response = await fetch(`${API_BASE_URL}/admin/models`, {
+  return apiFetch<Model>("/admin/models", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": generateRequestId(),
-    },
-    credentials: "include",
-    body: JSON.stringify(data),
+    json: data,
   })
-  return handleResponse<Model>(response)
 }
 
 export async function activateModel(modelId: string): Promise<Model> {
-  const response = await fetch(`${API_BASE_URL}/admin/models/${modelId}/activate`, {
-    method: "POST",
-    credentials: "include",
-  })
-  return handleResponse<Model>(response)
+  return apiFetch<Model>(`/admin/models/${modelId}/activate`, { method: "PUT" })
 }
 
 // Predictions
 export async function getPredictions(page = 1): Promise<PredictionsList> {
-  const response = await fetch(`${API_BASE_URL}/admin/predictions?page=${page}&limit=50`, {
-    method: "GET",
-    credentials: "include",
-  })
-  return handleResponse<PredictionsList>(response)
+  const data = await apiFetch<any>(`/admin/predictions?page=${page}&page_size=50`, { method: "GET" })
+  const predictions = Array.isArray(data) ? data : data?.predictions ?? data?.items ?? []
+  const total = typeof data?.total === "number" ? data.total : predictions.length
+  const pageSize = typeof data?.page_size === "number" ? data.page_size : 50
+  const pageNum = typeof data?.page === "number" ? data.page : page
+  return { predictions, total, page: pageNum, page_size: pageSize }
 }

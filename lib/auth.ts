@@ -1,6 +1,4 @@
-import type { APIError } from "./schemas"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api/v1"
+import { apiFetch, setAccessToken } from "./api"
 
 export interface User {
   id: string
@@ -12,66 +10,66 @@ export interface AuthResponse {
   user: User
 }
 
-// Generate request ID for tracing
-function generateRequestId(): string {
-  return crypto.getRandomValues(new Uint8Array(16)).reduce((a, b) => a + b.toString(16).padStart(2, "0"), "")
+type AuthTokens = {
+  access_token?: string
+  token?: string
+  token_type?: string
+  refresh_token?: string
 }
 
-async function handleResponse<T>(response: Response): Promise<T> {
-  const data = await response.json()
+type AuthLoginResponse = AuthTokens & { user?: User }
 
-  if (!response.ok) {
-    const error: APIError = data
-    throw new Error(error.error?.message || `API error: ${response.status}`)
+async function resolveAuthUser(data: AuthLoginResponse): Promise<AuthResponse> {
+  const token = data.access_token ?? data.token
+  if (token) {
+    setAccessToken(token)
   }
 
-  return data as T
+  if (data.user) {
+    return { user: data.user }
+  }
+
+  // Fallback: fetch current user with the token we just stored
+  return getSession()
 }
 
 export async function signUp(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/signup`, {
+  const data = await apiFetch<AuthLoginResponse>("/auth/signup", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": generateRequestId(),
-    },
-    credentials: "include",
-    body: JSON.stringify({ email, password }),
+    json: { email, password },
   })
 
-  return handleResponse<AuthResponse>(response)
+  return resolveAuthUser(data)
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/login`, {
+  const data = await apiFetch<AuthLoginResponse>("/auth/login", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Request-Id": generateRequestId(),
-    },
-    credentials: "include",
-    body: JSON.stringify({ email, password }),
+    json: { email, password },
   })
 
-  return handleResponse<AuthResponse>(response)
+  return resolveAuthUser(data)
 }
 
 export async function getSession(): Promise<AuthResponse> {
-  const response = await fetch(`${API_BASE_URL}/auth/me`, {
-    method: "GET",
-    credentials: "include",
-  })
-
-  if (!response.ok) {
-    throw new Error("Not authenticated")
-  }
-
-  return handleResponse<AuthResponse>(response)
+  return apiFetch<AuthResponse>("/auth/me", { method: "GET" })
 }
 
 export async function signOut(): Promise<void> {
-  await fetch(`${API_BASE_URL}/auth/logout`, {
+  await apiFetch("/auth/logout", { method: "POST" })
+  setAccessToken(null)
+}
+
+export async function requestPasswordReset(email: string): Promise<{ message: string; token?: string | null }> {
+  return apiFetch<{ message: string; token?: string | null }>("/auth/forgot-password", {
     method: "POST",
-    credentials: "include",
+    json: { email },
+  })
+}
+
+export async function resetPassword(token: string, password: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>("/auth/reset-password", {
+    method: "POST",
+    json: { token, password },
   })
 }

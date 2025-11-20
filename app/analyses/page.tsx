@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useAnalysesList, useDeleteAnalysisMutation } from "@/lib/hooks"
 import { AlertCircle, Trash2 } from "lucide-react"
 
-function AnalysesContent() {
+function AnalysisContent() {
   const [page, setPage] = useState(1)
   const { data, isLoading, error } = useAnalysesList(page)
   const { mutate: deleteAnalysis, isPending: isDeleting } = useDeleteAnalysisMutation()
@@ -30,7 +30,7 @@ function AnalysesContent() {
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">My Analyses</h1>
+          <h1 className="text-3xl font-bold">My Analysis</h1>
           <Link href="/analyze">
             <Button className="bg-blue-600 hover:bg-blue-700">New Analysis</Button>
           </Link>
@@ -41,7 +41,7 @@ function AnalysesContent() {
             <div className="flex gap-2 text-red-700 items-start">
               <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">Failed to load analyses</p>
+                <p className="font-medium">Failed to load analysis data</p>
                 <p className="text-sm mt-1">Make sure the backend API is running</p>
               </div>
             </div>
@@ -58,15 +58,15 @@ function AnalysesContent() {
                 </Card>
               ))}
             </>
-          ) : data?.analyses.length === 0 ? (
+          ) : data?.items.length === 0 ? (
             <Card className="p-12 text-center">
-              <p className="text-gray-500">No analyses yet. Start by analyzing a property.</p>
+              <p className="text-gray-500">No analysis available yet.</p>
               <Link href="/analyze" className="mt-4 inline-block">
                 <Button className="bg-blue-600 hover:bg-blue-700">Analyze Property</Button>
               </Link>
             </Card>
           ) : (
-            data?.analyses.map((analysis) => (
+            data?.items.map((analysis) => (
               <Card
                 key={analysis.id}
                 className="p-6 hover:shadow-md transition-shadow cursor-pointer"
@@ -109,15 +109,19 @@ function AnalysesContent() {
           )}
         </div>
 
-        {data && data.total > 20 && (
+        {data && data.total > (data.page_size || 20) && (
           <div className="mt-8 flex justify-center gap-2">
             <Button variant="outline" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
               Previous
             </Button>
             <span className="flex items-center px-4">
-              Page {page} of {Math.ceil(data.total / 20)}
+              Page {page} of {Math.ceil(data.total / (data.page_size || 20))}
             </span>
-            <Button variant="outline" onClick={() => setPage(page + 1)} disabled={page >= Math.ceil(data.total / 20)}>
+            <Button
+              variant="outline"
+              onClick={() => setPage(page + 1)}
+              disabled={page >= Math.ceil(data.total / (data.page_size || 20))}
+            >
               Next
             </Button>
           </div>
@@ -127,13 +131,13 @@ function AnalysesContent() {
   )
 }
 
-function AnalysesFallback() {
+function AnalysisFallback() {
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="rounded-lg bg-white p-12 shadow-sm text-center">
-          <h2 className="text-2xl font-bold mb-4">My Analyses</h2>
-          <p className="text-gray-600 mb-6">Sign in to view and manage your saved analyses.</p>
+          <h2 className="text-2xl font-bold mb-4">My Analysis</h2>
+          <p className="text-gray-600 mb-6">Sign in to view and manage your saved analysis.</p>
           <div className="flex gap-4 justify-center">
             <Link href="/signin">
               <Button className="bg-blue-600 hover:bg-blue-700">Sign In</Button>
@@ -148,10 +152,10 @@ function AnalysesFallback() {
   )
 }
 
-export default function AnalysesPage() {
+export default function AnalysisPage() {
   return (
-    <AuthGuard fallback={<AnalysesFallback />}>
-      <AnalysesContent />
+    <AuthGuard fallback={<AnalysisFallback />}>
+      <AnalysisContent />
     </AuthGuard>
   )
 }

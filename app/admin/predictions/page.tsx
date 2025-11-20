@@ -98,7 +98,12 @@ function PredictionsContent() {
                 Previous
               </Button>
               <span className="flex items-center px-4 text-sm">Page {page}</span>
-              <Button variant="outline" size="sm" onClick={() => setPage(page + 1)} disabled={page * 50 >= data.total}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPage(page + 1)}
+                disabled={page * (data.page_size || 50) >= data.total}
+              >
                 Next
                 <ChevronRight className="h-4 w-4" />
               </Button>

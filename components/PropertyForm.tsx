@@ -1,9 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { propertyPayloadSchema, type PropertyPayload, type PredictionResponse } from "@/lib/schemas"
+import { normalizePrediction } from "@/lib/prediction-utils"
+import { getMarketDefaults, estimateRenovationBudget, type RenovationLevel } from "@/lib/market-data"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -12,11 +14,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { usePredictMutation } from "@/lib/hooks"
 
+const initialMarket = getMarketDefaults()
+
 const steps = [
-  { id: 1, name: "Location", fields: ["country", "plz", "city", "lat", "lon", "property_type"] },
-  { id: 2, name: "Details", fields: ["surface_m2", "rooms", "year_built", "condition"] },
-  { id: 3, name: "Pricing", fields: ["price_buy", "reno_cost", "expected_rent_month", "holding_months"] },
-  { id: 4, name: "Financing", fields: ["financing", "fees"] },
+  { id: 1, name: "Location", fields: ["country", "plz", "city", "property_type"] },
+  {
+    id: 2,
+    name: "Property Details",
+    fields: ["surface_m2", "rooms", "year_built", "condition"],
+  },
+  { id: 3, name: "Pricing & Income", fields: ["price_buy", "expected_rent_month", "holding_months"] },
+  { id: 4, name: "Financing & Fees", fields: ["financing", "fees"] },
 ]
 
 interface PropertyFormProps {
@@ -25,7 +33,15 @@ interface PropertyFormProps {
 
 export function PropertyForm({ onSuccess }: PropertyFormProps) {
   const [currentStep, setCurrentStep] = useState(1)
-  const { mutate, isPending, error, data: result } = usePredictMutation()
+  const [renovationLevel, setRenovationLevel] = useState<RenovationLevel>("standard")
+  const { mutate, isPending, error } = usePredictMutation()
+  const parseOptionalNumber = (value: unknown) => {
+    if (value === "" || value === null || typeof value === "undefined") {
+      return undefined
+    }
+    const parsed = Number(value)
+    return Number.isNaN(parsed) ? undefined : parsed
+  }
   const {
     register,
     handleSubmit,
@@ -37,21 +53,85 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
     mode: "onChange",
     defaultValues: {
       country: "DE",
+      district: "",
       property_type: "wohnung",
       condition: "average",
-      financing: { ltv: 0.8, fix_years: "10" },
-      fees: { grunderwerb_pct: 0.06, notary_pct: 0.015, agent_pct: 0.03, other: 1500 },
+      year_built: 1990,
+      holding_months: 12,
+      listing_year: initialMarket.listing_year,
+      listing_quarter: initialMarket.listing_quarter,
+      greix_index: initialMarket.greix_index,
+      hpi_index: initialMarket.hpi_index,
+      mortgage_rate_10y: initialMarket.mortgage_rate_10y,
+      reno_cost: 0,
+      expected_rent_month: 0,
+      financing: { ltv: 0.8, fix_years: 10 },
+      fees: { grunderwerb_pct: 6, notary_pct: 1.5, agent_pct: 3, other: 1500 },
     },
   })
 
   const values = watch()
+  const cityValue = watch("city")
+  const surfaceValue = watch("surface_m2")
+  const priceBuyValue = watch("price_buy")
+  const conditionValue = watch("condition")
+
+  useEffect(() => {
+    const market = getMarketDefaults(cityValue)
+    setValue("greix_index", market.greix_index, { shouldValidate: true, shouldDirty: false })
+    setValue("hpi_index", market.hpi_index, { shouldValidate: true, shouldDirty: false })
+    setValue("mortgage_rate_10y", market.mortgage_rate_10y, { shouldValidate: true, shouldDirty: false })
+    setValue("listing_year", market.listing_year, { shouldValidate: true, shouldDirty: false })
+    setValue("listing_quarter", market.listing_quarter, { shouldValidate: true, shouldDirty: false })
+  }, [cityValue, setValue])
+
+  useEffect(() => {
+    if (!surfaceValue || surfaceValue <= 0 || !priceBuyValue || priceBuyValue <= 0) {
+      return
+    }
+    const pricePerM2 = priceBuyValue / surfaceValue
+    const renovation = estimateRenovationBudget({
+      surface_m2: surfaceValue,
+      condition: conditionValue,
+      price_buy: priceBuyValue,
+      price_per_m2: pricePerM2,
+      renovationLevel,
+    })
+    setValue("price_per_m2", pricePerM2, { shouldValidate: true })
+    setValue("reno_cost", renovation.reno_cost, { shouldValidate: true })
+    setValue("reno_cost_per_m2", renovation.reno_cost_per_m2, { shouldValidate: true })
+    setValue("uplift_pct", renovation.uplift_pct, { shouldValidate: true })
+  }, [surfaceValue, priceBuyValue, conditionValue, renovationLevel, setValue])
+
   const currentStepConfig = steps[currentStep - 1]
 
   const onSubmit = (data: PropertyPayload) => {
-    mutate(data, {
+    const market = getMarketDefaults(data.city)
+    const pricePerM2 = data.surface_m2 ? data.price_buy / data.surface_m2 : undefined
+    const renovation = estimateRenovationBudget({
+      surface_m2: data.surface_m2,
+      condition: data.condition,
+      price_buy: data.price_buy,
+      price_per_m2: pricePerM2,
+      renovationLevel,
+    })
+    const payload: PropertyPayload = {
+      ...data,
+      greix_index: market.greix_index,
+      hpi_index: market.hpi_index,
+      mortgage_rate_10y: market.mortgage_rate_10y,
+      listing_year: market.listing_year,
+      listing_quarter: market.listing_quarter,
+      price_per_m2: pricePerM2,
+      reno_cost: renovation.reno_cost,
+      reno_cost_per_m2: renovation.reno_cost_per_m2,
+      uplift_pct: renovation.uplift_pct,
+    }
+
+    mutate(payload, {
       onSuccess: (result) => {
-        localStorage.setItem("payload:last", JSON.stringify(data))
-        onSuccess?.(data, result)
+        localStorage.setItem("payload:last", JSON.stringify(payload))
+        onSuccess?.(payload, normalizePrediction(payload, result))
       },
     })
   }
@@ -75,6 +155,16 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)}>
+        {/* Hidden inputs for auto-calculated fields to satisfy validation */}
+        <input type="hidden" {...register("listing_year", { valueAsNumber: true })} />
+        <input type="hidden" {...register("listing_quarter", { valueAsNumber: true })} />
+        <input type="hidden" {...register("greix_index", { valueAsNumber: true })} />
+        <input type="hidden" {...register("hpi_index", { valueAsNumber: true })} />
+        <input type="hidden" {...register("mortgage_rate_10y", { valueAsNumber: true })} />
+        <input type="hidden" {...register("price_per_m2", { valueAsNumber: true })} />
+        <input type="hidden" {...register("reno_cost", { valueAsNumber: true })} />
+        <input type="hidden" {...register("reno_cost_per_m2", { valueAsNumber: true })} />
+        <input type="hidden" {...register("uplift_pct", { valueAsNumber: true })} />
         <Card className="mb-6 p-6">
           <h2 className="mb-6 text-lg font-semibold">{currentStepConfig.name}</h2>
 
@@ -102,29 +192,6 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                   className={errors.city ? "border-red-500" : ""}
                 />
                 {errors.city && <span className="text-sm text-red-500">{errors.city.message}</span>}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="lat">Latitude (optional)</Label>
-                  <Input
-                    id="lat"
-                    type="number"
-                    step="0.0001"
-                    {...register("lat", { valueAsNumber: true })}
-                    placeholder="52.532"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="lon">Longitude (optional)</Label>
-                  <Input
-                    id="lon"
-                    type="number"
-                    step="0.0001"
-                    {...register("lon", { valueAsNumber: true })}
-                    placeholder="13.384"
-                  />
-                </div>
               </div>
 
               <div>
@@ -174,17 +241,19 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="year_built">Year Built (optional)</Label>
+                <Label htmlFor="year_built">Year Built</Label>
                 <Input
                   id="year_built"
                   type="number"
                   {...register("year_built", { valueAsNumber: true })}
-                  placeholder="1965"
+                  placeholder="1990"
+                  className={errors.year_built ? "border-red-500" : ""}
                 />
+                {errors.year_built && <span className="text-sm text-red-500">{errors.year_built.message}</span>}
               </div>
 
               <div>
-                <Label htmlFor="condition">Condition (optional)</Label>
+                <Label htmlFor="condition">Condition</Label>
                 <Select value={values.condition || ""} onValueChange={(value) => setValue("condition", value as any)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select condition" />
@@ -197,6 +266,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                   </SelectContent>
                 </Select>
               </div>
+
             </div>
           )}
 
@@ -204,7 +274,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
           {currentStep === 3 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="price_buy">Purchase Price (€)</Label>
+                <Label htmlFor="price_buy">Purchase Price (EUR)</Label>
                 <Input
                   id="price_buy"
                   type="number"
@@ -216,23 +286,36 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="reno_cost">Renovation Cost (€)</Label>
-                <Input
-                  id="reno_cost"
-                  type="number"
-                  {...register("reno_cost", { valueAsNumber: true })}
-                  placeholder="22000"
-                  className={errors.reno_cost ? "border-red-500" : ""}
-                />
-                {errors.reno_cost && <span className="text-sm text-red-500">{errors.reno_cost.message}</span>}
+                <Label>Renovation Scope</Label>
+                <Select value={renovationLevel} onValueChange={(value) => setRenovationLevel(value as RenovationLevel)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select scope" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">Light touch (cosmetic refresh)</SelectItem>
+                    <SelectItem value="standard">Standard (kitchen/bath updates)</SelectItem>
+                    <SelectItem value="full">Full renovation (structural)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Budget is auto-estimated from scope, size, and property condition.
+                </p>
               </div>
 
               <div>
-                <Label htmlFor="expected_rent_month">Expected Rent/Month (€)</Label>
+                <Label htmlFor="expected_rent_month">Expected Rent/Month (EUR) [optional]</Label>
                 <Input
                   id="expected_rent_month"
                   type="number"
-                  {...register("expected_rent_month", { valueAsNumber: true })}
+                  {...register("expected_rent_month", {
+                    valueAsNumber: true,
+                    setValueAs: (value) => {
+                      if (value === "" || value === null || typeof value === "undefined") {
+                        return 0
+                      }
+                      return Number(value)
+                    },
+                  })}
                   placeholder="1200"
                 />
               </div>
@@ -248,10 +331,15 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                 />
                 {errors.holding_months && <span className="text-sm text-red-500">{errors.holding_months.message}</span>}
               </div>
+
+              <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-600">
+                Market indexes, mortgage rates, and renovation budgets are prefilled from our dataset for the selected
+                city. Adjust the economic levers above to fine-tune ROI.
+              </div>
             </div>
           )}
 
-          {/* Step 4: Financing */}
+          {/* Step 4: Financing & Fees */}
           {currentStep === 4 && (
             <div className="space-y-4">
               <div className="rounded-lg border border-gray-200 p-4">
@@ -269,16 +357,16 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                       placeholder="0.80"
                     />
                   </div>
-                  <div>
-                    <Label htmlFor="fix_years">Fixed Rate Period</Label>
-                    <Select
-                      value={values.financing.fix_years}
-                      onValueChange={(value) => setValue("financing.fix_years", value as any)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
+                <div>
+                  <Label htmlFor="fix_years">Fixed Rate Period</Label>
+                  <Select
+                    value={values.financing?.fix_years ? String(values.financing?.fix_years) : ""}
+                    onValueChange={(value) => setValue("financing.fix_years", Number(value))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
                         <SelectItem value="1">1 year</SelectItem>
                         <SelectItem value="5">5 years</SelectItem>
                         <SelectItem value="10">10 years</SelectItem>
@@ -298,9 +386,9 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     <Input
                       id="grunderwerb_pct"
                       type="number"
-                      step="0.001"
+                      step="0.1"
                       {...register("fees.grunderwerb_pct", { valueAsNumber: true })}
-                      placeholder="0.06"
+                      placeholder="6"
                     />
                   </div>
                   <div>
@@ -308,9 +396,9 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     <Input
                       id="notary_pct"
                       type="number"
-                      step="0.001"
+                      step="0.1"
                       {...register("fees.notary_pct", { valueAsNumber: true })}
-                      placeholder="0.015"
+                      placeholder="1.5"
                     />
                   </div>
                   <div>
@@ -318,9 +406,9 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     <Input
                       id="agent_pct"
                       type="number"
-                      step="0.001"
-                      {...register("fees.agent_pct", { valueAsNumber: true })}
-                      placeholder="0.03"
+                      step="0.1"
+                      {...register("fees.agent_pct", { valueAsNumber: true, setValueAs: parseOptionalNumber })}
+                      placeholder="3"
                     />
                   </div>
                   <div>
@@ -328,7 +416,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     <Input
                       id="other"
                       type="number"
-                      {...register("fees.other", { valueAsNumber: true })}
+                      {...register("fees.other", { valueAsNumber: true, setValueAs: parseOptionalNumber })}
                       placeholder="1500"
                     />
                   </div>
@@ -355,13 +443,13 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
             Back
           </Button>
 
-          {currentStep < 4 ? (
-            <Button type="button" onClick={() => setCurrentStep(currentStep + 1)}>
+          {currentStep < steps.length ? (
+            <Button type="button" onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}>
               Next
             </Button>
           ) : (
             <Button type="submit" disabled={!isValid || isPending} className="bg-blue-600 hover:bg-blue-700">
-              {isPending ? "Analyzing..." : "Analyze Property"}
+              {isPending ? "Analyzing..." : "Run Analysis"}
             </Button>
           )}
         </div>

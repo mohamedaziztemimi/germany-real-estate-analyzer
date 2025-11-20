@@ -10,14 +10,12 @@ import { useAuth } from "@/lib/hooks-auth"
 function NavigationContent() {
   const { data: authData } = useAuth()
   const isAuthenticated = !!authData?.user
+  const isAdmin = authData?.user?.role === "admin"
 
   return (
     <div className="flex gap-6 items-center">
       <Link href="/" className="text-gray-600 hover:text-gray-900">
         Home
-      </Link>
-      <Link href="/analyze" className="text-gray-600 hover:text-gray-900">
-        Analyze
       </Link>
       {isAuthenticated && (
         <>
@@ -25,11 +23,16 @@ function NavigationContent() {
             Dashboard
           </Link>
           <Link href="/analyses" className="text-gray-600 hover:text-gray-900">
-            Analyses
+            Analysis
           </Link>
-          <Link href="/chat" className="text-gray-600 hover:text-gray-900">
-            Chat
+          <Link href="/shared" className="text-gray-600 hover:text-gray-900">
+            Discussions
           </Link>
+          {isAdmin && (
+            <Link href="/admin/users" className="text-gray-600 hover:text-gray-900">
+              Users
+            </Link>
+          )}
         </>
       )}
       <div className="flex gap-4 items-center">
@@ -61,10 +64,8 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
         </nav>
       </header>
 
-      {/* Main Content */}
       {children}
 
-      {/* Footer */}
       <footer className="border-t border-gray-200 bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl text-center text-sm text-gray-600">
           <p>&copy; 2025 Germany Real Estate Investment Platform. All rights reserved.</p>

@@ -14,7 +14,8 @@ import Link from "next/link"
 function DashboardContent() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const { data, isLoading, error } = useAnalyticsSummary()
-  const router = useRouter()
+  const totalRequests = data?.total_requests ?? 0
+  const showEmptyState = !isLoading && (!data || totalRequests === 0 || !!error)
 
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
@@ -23,23 +24,9 @@ function DashboardContent() {
           <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
           <Button onClick={() => setIsChatOpen(true)} className="bg-blue-600 hover:bg-blue-700" variant="default">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Chat
+            Ask AI
           </Button>
         </div>
-
-        {error && (
-          <Card className="border-red-200 bg-red-50 p-4 mb-6">
-            <div className="flex gap-2 items-start text-red-700">
-              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium">Failed to load analytics data</p>
-                <p className="text-sm mt-1">
-                  Make sure the backend API is running at {process.env.NEXT_PUBLIC_API_BASE_URL}
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {/* Total Requests */}
@@ -48,7 +35,7 @@ function DashboardContent() {
             {isLoading ? (
               <Skeleton className="mt-2 h-8 w-16" />
             ) : (
-              <p className="mt-2 text-3xl font-bold">{data?.total_requests?.toLocaleString() || 0}</p>
+              <p className="mt-2 text-3xl font-bold">{totalRequests.toLocaleString()}</p>
             )}
           </Card>
 
@@ -85,7 +72,16 @@ function DashboardContent() {
           </Card>
         </div>
 
-        {data?.updated_at && (
+        {showEmptyState && (
+          <Card className="p-8 text-center">
+            <div className="flex flex-col items-center gap-3 text-gray-500">
+              <AlertCircle className="h-5 w-5" />
+              <p>You haven’t run any analysis yet.</p>
+            </div>
+          </Card>
+        )}
+
+        {data?.updated_at && !showEmptyState && (
           <p className="mt-8 text-sm text-gray-500">Last updated: {new Date(data.updated_at).toLocaleString()}</p>
         )}
 

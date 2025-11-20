@@ -44,6 +44,9 @@ export default function AnalyzePage() {
           {/* Results Section */}
           {submitted && result && payload && (
             <div className="space-y-6">
+              <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm font-medium">
+                Analysis completed successfully.
+              </div>
               <div className="flex gap-2">
                 <SaveAnalysisButton payload={payload} response={result} onSuccess={handleSaveSuccess} />
                 <Button variant="outline" onClick={() => setSubmitted(false)}>
