@@ -13,27 +13,34 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { usePredictMutation } from "@/lib/hooks"
+import { useLanguage } from "@/lib/language-context"
 
 const initialMarket = getMarketDefaults()
 
-const steps = [
-  { id: 1, name: "Location", fields: ["country", "plz", "city", "property_type"] },
-  {
-    id: 2,
-    name: "Property Details",
-    fields: ["surface_m2", "rooms", "year_built", "condition"],
-  },
-  { id: 3, name: "Pricing & Income", fields: ["price_buy", "expected_rent_month", "holding_months"] },
-  { id: 4, name: "Financing & Fees", fields: ["financing", "fees"] },
-]
+const CONDITION_UPLIFT: Record<string, number> = { good: 0.02, medium: 0.1, poor: 0.22 }
 
 interface PropertyFormProps {
   onSuccess?: (data: PropertyPayload, result: PredictionResponse) => void
 }
 
 export function PropertyForm({ onSuccess }: PropertyFormProps) {
+  const { strings, language } = useLanguage()
+  const steps = [
+    { id: 1, name: strings.stepLocation, fields: ["country", "plz", "city", "district", "property_type"] },
+    {
+      id: 2,
+      name: strings.stepProperty,
+      fields: ["surface_m2", "rooms", "year_built", "floor", "condition", "has_elevator", "has_balcony"],
+    },
+    {
+      id: 3,
+      name: strings.stepListing,
+      fields: ["price_buy", "reno_cost", "listing_year", "listing_quarter", "greix_index", "hpi_index", "mortgage_rate_10y"],
+    },
+    { id: 4, name: strings.stepFinancing, fields: ["expected_rent_month", "holding_months", "financing", "fees"] },
+  ]
   const [currentStep, setCurrentStep] = useState(1)
-  const [renovationLevel, setRenovationLevel] = useState<RenovationLevel>("standard")
+  const renovationLevel: RenovationLevel = "standard"
   const { mutate, isPending, error } = usePredictMutation()
   const parseOptionalNumber = (value: unknown) => {
     if (value === "" || value === null || typeof value === "undefined") {
@@ -45,7 +52,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
   const {
     register,
     handleSubmit,
-    formState: { errors, isValid },
+    formState: { errors, isValid, dirtyFields },
     watch,
     setValue,
   } = useForm<PropertyPayload>({
@@ -53,10 +60,14 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
     mode: "onChange",
     defaultValues: {
       country: "DE",
-      district: "",
-      property_type: "wohnung",
-      condition: "average",
+      district: "Mitte",
+      property_type: "apartment",
+      condition: "medium",
+      energy_efficiency_class: "C",
       year_built: 1990,
+      floor: 0,
+      has_elevator: 0,
+      has_balcony: 0,
       holding_months: 12,
       listing_year: initialMarket.listing_year,
       listing_quarter: initialMarket.listing_quarter,
@@ -64,6 +75,9 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
       hpi_index: initialMarket.hpi_index,
       mortgage_rate_10y: initialMarket.mortgage_rate_10y,
       reno_cost: 0,
+      price_per_m2: 0,
+      reno_cost_per_m2: 0,
+      uplift_pct: CONDITION_UPLIFT.medium,
       expected_rent_month: 0,
       financing: { ltv: 0.8, fix_years: 10 },
       fees: { grunderwerb_pct: 6, notary_pct: 1.5, agent_pct: 3, other: 1500 },
@@ -74,7 +88,26 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
   const cityValue = watch("city")
   const surfaceValue = watch("surface_m2")
   const priceBuyValue = watch("price_buy")
+  const renoCostValue = watch("reno_cost")
   const conditionValue = watch("condition")
+  const hasElevatorValue = watch("has_elevator")
+  const hasBalconyValue = watch("has_balcony")
+  const pricePerM2Display = surfaceValue && priceBuyValue ? priceBuyValue / surfaceValue : 0
+  const renoCostPerM2Display = surfaceValue ? (renoCostValue ?? 0) / surfaceValue : 0
+  const propertyTypeOptions = [
+    { value: "apartment", label: language === "de" ? "Apartment" : "Apartment" },
+    { value: "wohnung", label: language === "de" ? "Wohnung" : "Apartment (Wohnung)" },
+    { value: "haus", label: language === "de" ? "Haus" : "House" },
+    { value: "gewerbe", label: language === "de" ? "Gewerbe" : "Commercial" },
+  ]
+
+  const normalizeConditionValue = (value?: PropertyPayload["condition"] | null) => {
+    if (!value) return undefined
+    const normalized = String(value).toLowerCase()
+    if (normalized === "average") return "medium"
+    if (normalized === "renovated") return "good"
+    return normalized as PropertyPayload["condition"]
+  }
 
   useEffect(() => {
     const market = getMarketDefaults(cityValue)
@@ -86,47 +119,100 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
   }, [cityValue, setValue])
 
   useEffect(() => {
+    const normalizedCondition = normalizeConditionValue(conditionValue)
+    if (normalizedCondition) {
+      setValue("condition", normalizedCondition, { shouldValidate: true })
+      const uplift = CONDITION_UPLIFT[normalizedCondition]
+      if (uplift !== undefined) {
+        setValue("uplift_pct", uplift, { shouldValidate: true })
+      }
+    }
+  }, [conditionValue, setValue])
+
+  useEffect(() => {
     if (!surfaceValue || surfaceValue <= 0 || !priceBuyValue || priceBuyValue <= 0) {
       return
     }
     const pricePerM2 = priceBuyValue / surfaceValue
-    const renovation = estimateRenovationBudget({
+    setValue("price_per_m2", pricePerM2, { shouldValidate: true })
+  }, [surfaceValue, priceBuyValue, setValue])
+
+  useEffect(() => {
+    if (!surfaceValue || surfaceValue <= 0) {
+      return
+    }
+    const renoCost = typeof renoCostValue === "number" ? renoCostValue : 0
+    setValue("reno_cost_per_m2", surfaceValue ? renoCost / surfaceValue : 0, { shouldValidate: true })
+  }, [surfaceValue, renoCostValue, setValue])
+
+  useEffect(() => {
+    if (!surfaceValue || surfaceValue <= 0 || !priceBuyValue || priceBuyValue <= 0) {
+      return
+    }
+    if (dirtyFields?.reno_cost) {
+      return
+    }
+    if (renoCostValue && renoCostValue > 0) {
+      return
+    }
+    const normalizedCondition = normalizeConditionValue(conditionValue)
+    const pricePerM2 = priceBuyValue / surfaceValue
+    const estimate = estimateRenovationBudget({
       surface_m2: surfaceValue,
-      condition: conditionValue,
+      condition: normalizedCondition || conditionValue,
       price_buy: priceBuyValue,
       price_per_m2: pricePerM2,
       renovationLevel,
     })
-    setValue("price_per_m2", pricePerM2, { shouldValidate: true })
-    setValue("reno_cost", renovation.reno_cost, { shouldValidate: true })
-    setValue("reno_cost_per_m2", renovation.reno_cost_per_m2, { shouldValidate: true })
-    setValue("uplift_pct", renovation.uplift_pct, { shouldValidate: true })
-  }, [surfaceValue, priceBuyValue, conditionValue, renovationLevel, setValue])
+    setValue("reno_cost", estimate.reno_cost, { shouldValidate: true })
+    setValue("reno_cost_per_m2", estimate.reno_cost_per_m2, { shouldValidate: true })
+  }, [surfaceValue, priceBuyValue, conditionValue, renovationLevel, renoCostValue, dirtyFields, setValue])
 
   const currentStepConfig = steps[currentStep - 1]
 
   const onSubmit = (data: PropertyPayload) => {
-    const market = getMarketDefaults(data.city)
-    const pricePerM2 = data.surface_m2 ? data.price_buy / data.surface_m2 : undefined
-    const renovation = estimateRenovationBudget({
-      surface_m2: data.surface_m2,
-      condition: data.condition,
-      price_buy: data.price_buy,
-      price_per_m2: pricePerM2,
-      renovationLevel,
-    })
+    // Safety guard: never run analysis until user is on the final step
+    if (currentStep < steps.length) {
+      setCurrentStep((prev) => Math.min(steps.length, prev + 1))
+      return
+    }
+
+    const normalizedCondition = normalizeConditionValue(data.condition) || "medium"
+    const pricePerM2 = data.surface_m2 ? data.price_buy / data.surface_m2 : 0
+    const renoCost = data.reno_cost ?? 0
+    const renoCostPerM2 = data.surface_m2 ? renoCost / data.surface_m2 : 0
+    const uplift = CONDITION_UPLIFT[normalizedCondition] ?? CONDITION_UPLIFT.medium
+    const holdingMonths = data.holding_months ?? 0
+    const holdingYears = holdingMonths / 12
+
+    if (!Number.isFinite(pricePerM2) || pricePerM2 <= 0) {
+      return
+    }
+
     const payload: PropertyPayload = {
       ...data,
-      greix_index: market.greix_index,
-      hpi_index: market.hpi_index,
-      mortgage_rate_10y: market.mortgage_rate_10y,
-      listing_year: market.listing_year,
-      listing_quarter: market.listing_quarter,
+      condition: normalizedCondition,
+      has_elevator: data.has_elevator ?? 0,
+      has_balcony: data.has_balcony ?? 0,
       price_per_m2: pricePerM2,
-      reno_cost: renovation.reno_cost,
-      reno_cost_per_m2: renovation.reno_cost_per_m2,
-      uplift_pct: renovation.uplift_pct,
+      reno_cost: renoCost,
+      reno_cost_per_m2: renoCostPerM2,
+      uplift_pct: uplift,
+      holding_months: holdingMonths,
+      expected_rent_month: data.expected_rent_month ?? 0,
+      financing: {
+        ltv: data.financing?.ltv ?? 0,
+        fix_years: data.financing?.fix_years ?? 0,
+      },
+      fees: {
+        grunderwerb_pct: data.fees?.grunderwerb_pct ?? 0,
+        notary_pct: data.fees?.notary_pct ?? 0,
+        agent_pct: data.fees?.agent_pct ?? 0,
+        other: data.fees?.other ?? 0,
+      },
     }
+
+    ;(payload as any).holding_years = holdingYears
 
     mutate(payload, {
       onSuccess: (result) => {
@@ -154,17 +240,23 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
         ))}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        {/* Hidden inputs for auto-calculated fields to satisfy validation */}
-        <input type="hidden" {...register("listing_year", { valueAsNumber: true })} />
-        <input type="hidden" {...register("listing_quarter", { valueAsNumber: true })} />
-        <input type="hidden" {...register("greix_index", { valueAsNumber: true })} />
-        <input type="hidden" {...register("hpi_index", { valueAsNumber: true })} />
-        <input type="hidden" {...register("mortgage_rate_10y", { valueAsNumber: true })} />
+      <form
+        onSubmit={(e) => e.preventDefault()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault()
+          }
+        }}
+      >
+        {/* Hidden inputs for derived fields to keep validation in sync */}
         <input type="hidden" {...register("price_per_m2", { valueAsNumber: true })} />
-        <input type="hidden" {...register("reno_cost", { valueAsNumber: true })} />
         <input type="hidden" {...register("reno_cost_per_m2", { valueAsNumber: true })} />
         <input type="hidden" {...register("uplift_pct", { valueAsNumber: true })} />
+        <input type="hidden" {...register("has_elevator", { valueAsNumber: true })} />
+        <input type="hidden" {...register("has_balcony", { valueAsNumber: true })} />
+        <input type="hidden" {...register("property_type")} />
+        <input type="hidden" {...register("condition")} />
+        <input type="hidden" {...register("energy_efficiency_class")} />
         <Card className="mb-6 p-6">
           <h2 className="mb-6 text-lg font-semibold">{currentStepConfig.name}</h2>
 
@@ -172,7 +264,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
           {currentStep === 1 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="plz">PLZ (Postal Code)</Label>
+                <Label htmlFor="plz">{strings.plz}</Label>
                 <Input
                   id="plz"
                   {...register("plz")}
@@ -184,7 +276,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="city">City</Label>
+                <Label htmlFor="city">{strings.city}</Label>
                 <Input
                   id="city"
                   {...register("city")}
@@ -195,16 +287,73 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="property_type">Property Type</Label>
-                <Select value={values.property_type} onValueChange={(value) => setValue("property_type", value as any)}>
-                  <SelectTrigger>
-                    <SelectValue />
+                <Label htmlFor="district">{strings.district}</Label>
+                <Select
+                  value={values.district || "Mitte"}
+                  onValueChange={(value) => setValue("district", value, { shouldValidate: true })}
+                >
+                  <SelectTrigger id="district" className={errors.district ? "border-red-500" : ""}>
+                    <SelectValue placeholder={strings.selectDistrict} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="wohnung">Wohnung (Apartment)</SelectItem>
-                    <SelectItem value="haus">Haus (House)</SelectItem>
-                    <SelectItem value="apartment">Apartment</SelectItem>
-                    <SelectItem value="gewerbe">Gewerbe (Commercial)</SelectItem>
+                    {[
+                      "Altona",
+                      "Anger-Crottendorf",
+                      "Bad Cannstatt",
+                      "Barmbek",
+                      "Benrath",
+                      "Bilk",
+                      "Bogenhausen",
+                      "Charlottenburg",
+                      "Derendorf",
+                      "Düsseltal",
+                      "Eimsbüttel",
+                      "Flingern",
+                      "Friedrichshain",
+                      "Giesing",
+                      "Gohlis",
+                      "Harlaching",
+                      "Harvestehude",
+                      "Lindenau",
+                      "Mitte",
+                      "Neuhausen",
+                      "Neukölln",
+                      "Oberkassel",
+                      "Plagwitz",
+                      "Prenzlauer Berg",
+                      "Reudnitz",
+                      "Schwabing",
+                      "Sendling",
+                      "Süd",
+                      "Vaihingen",
+                      "Wahren",
+                      "Wandsbek",
+                      "West",
+                      "Wilmersdorf",
+                      "Winterhude",
+                      "Zuffenhausen",
+                    ].map((d) => (
+                      <SelectItem key={d} value={d}>
+                        {d}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.district && <span className="text-sm text-red-500">{errors.district.message}</span>}
+              </div>
+
+              <div>
+                <Label htmlFor="property_type">{strings.propertyType}</Label>
+                <Select value={values.property_type} onValueChange={(value) => setValue("property_type", value as any)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={strings.selectPropertyType} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {propertyTypeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -215,7 +364,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
           {currentStep === 2 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="surface_m2">Surface Area (m²)</Label>
+                <Label htmlFor="surface_m2">{strings.surface}</Label>
                 <Input
                   id="surface_m2"
                   type="number"
@@ -228,7 +377,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="rooms">Number of Rooms</Label>
+                <Label htmlFor="rooms">{strings.rooms}</Label>
                 <Input
                   id="rooms"
                   type="number"
@@ -241,10 +390,12 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="year_built">Year Built</Label>
+                <Label htmlFor="year_built">{strings.yearBuilt}</Label>
                 <Input
                   id="year_built"
                   type="number"
+                  min="1800"
+                  max="2100"
                   {...register("year_built", { valueAsNumber: true })}
                   placeholder="1990"
                   className={errors.year_built ? "border-red-500" : ""}
@@ -253,28 +404,85 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="condition">Condition</Label>
+                <Label htmlFor="floor">{strings.floor}</Label>
+                <Input
+                  id="floor"
+                  type="number"
+                  min="-5"
+                  {...register("floor", { valueAsNumber: true })}
+                  placeholder="3"
+                  className={errors.floor ? "border-red-500" : ""}
+                />
+                {errors.floor && <span className="text-sm text-red-500">{errors.floor.message}</span>}
+              </div>
+
+              <div>
+                <Label htmlFor="condition">{strings.condition}</Label>
                 <Select value={values.condition || ""} onValueChange={(value) => setValue("condition", value as any)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select condition" />
+                    <SelectValue placeholder={strings.selectCondition} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="poor">Poor</SelectItem>
-                    <SelectItem value="average">Average</SelectItem>
-                    <SelectItem value="good">Good</SelectItem>
-                    <SelectItem value="renovated">Renovated</SelectItem>
+                    <SelectItem value="good">{language === "de" ? "Gut / Renoviert" : "Good / Renovated"}</SelectItem>
+                    <SelectItem value="medium">{language === "de" ? "Mittel / Durchschnitt" : "Medium / Average"}</SelectItem>
+                    <SelectItem value="poor">{language === "de" ? "Schlecht" : "Poor"}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
+              <div>
+                <Label htmlFor="energy_efficiency_class">{strings.energyClass}</Label>
+                <Select
+                  value={values.energy_efficiency_class || ""}
+                  onValueChange={(value) => setValue("energy_efficiency_class", value as any)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={strings.selectEnergy} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A+">A+</SelectItem>
+                    <SelectItem value="A">A</SelectItem>
+                    <SelectItem value="B">B</SelectItem>
+                    <SelectItem value="C">C</SelectItem>
+                    <SelectItem value="D">D</SelectItem>
+                    <SelectItem value="E">E</SelectItem>
+                    <SelectItem value="F">F</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3">
+                  <input
+                    id="has_elevator"
+                    type="checkbox"
+                    checked={Boolean(hasElevatorValue)}
+                    onChange={(e) => setValue("has_elevator", e.target.checked ? 1 : 0, { shouldValidate: true })}
+                  />
+                  <Label htmlFor="has_elevator" className="mb-0 cursor-pointer">
+                    {strings.elevator}
+                  </Label>
+                </div>
+                <div className="flex items-center gap-3">
+                  <input
+                    id="has_balcony"
+                    type="checkbox"
+                    checked={Boolean(hasBalconyValue)}
+                    onChange={(e) => setValue("has_balcony", e.target.checked ? 1 : 0, { shouldValidate: true })}
+                  />
+                  <Label htmlFor="has_balcony" className="mb-0 cursor-pointer">
+                    {strings.balcony}
+                  </Label>
+                </div>
+              </div>
             </div>
           )}
 
-          {/* Step 3: Pricing */}
+          {/* Step 3: Listing & Market */}
           {currentStep === 3 && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="price_buy">Purchase Price (EUR)</Label>
+                <Label htmlFor="price_buy">{strings.priceBuy}</Label>
                 <Input
                   id="price_buy"
                   type="number"
@@ -286,24 +494,101 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label>Renovation Scope</Label>
-                <Select value={renovationLevel} onValueChange={(value) => setRenovationLevel(value as RenovationLevel)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select scope" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="light">Light touch (cosmetic refresh)</SelectItem>
-                    <SelectItem value="standard">Standard (kitchen/bath updates)</SelectItem>
-                    <SelectItem value="full">Full renovation (structural)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="mt-1 text-xs text-gray-500">
-                  Budget is auto-estimated from scope, size, and property condition.
-                </p>
+                <Label htmlFor="reno_cost">{strings.renoCost}</Label>
+                <Input
+                  id="reno_cost"
+                  type="number"
+                  step="1000"
+                  {...register("reno_cost", { valueAsNumber: true })}
+                  placeholder="50000"
+                  className={errors.reno_cost ? "border-red-500" : ""}
+                />
+                {errors.reno_cost && <span className="text-sm text-red-500">{errors.reno_cost.message}</span>}
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="listing_year">{strings.listingYear}</Label>
+                  <Input
+                    id="listing_year"
+                    type="number"
+                    min="1900"
+                    max="2100"
+                    {...register("listing_year", { valueAsNumber: true })}
+                    className={errors.listing_year ? "border-red-500" : ""}
+                  />
+                  {errors.listing_year && <span className="text-sm text-red-500">{errors.listing_year.message}</span>}
+                </div>
+                <div>
+                  <Label htmlFor="listing_quarter">{strings.listingQuarter}</Label>
+                  <Input
+                    id="listing_quarter"
+                    type="number"
+                    min="1"
+                    max="4"
+                    {...register("listing_quarter", { valueAsNumber: true })}
+                    className={errors.listing_quarter ? "border-red-500" : ""}
+                  />
+                  {errors.listing_quarter && (
+                    <span className="text-sm text-red-500">{errors.listing_quarter.message}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="greix_index">{strings.greixIndex}</Label>
+                  <Input
+                    id="greix_index"
+                    type="number"
+                    step="0.01"
+                    {...register("greix_index", { valueAsNumber: true })}
+                    className={errors.greix_index ? "border-red-500" : ""}
+                  />
+                  {errors.greix_index && <span className="text-sm text-red-500">{errors.greix_index.message}</span>}
+                </div>
+                <div>
+                  <Label htmlFor="hpi_index">{strings.hpiIndex}</Label>
+                  <Input
+                    id="hpi_index"
+                    type="number"
+                    step="0.01"
+                    {...register("hpi_index", { valueAsNumber: true })}
+                    className={errors.hpi_index ? "border-red-500" : ""}
+                  />
+                  {errors.hpi_index && <span className="text-sm text-red-500">{errors.hpi_index.message}</span>}
+                </div>
+                <div>
+                  <Label htmlFor="mortgage_rate_10y">{strings.mortgageRate}</Label>
+                  <Input
+                    id="mortgage_rate_10y"
+                    type="number"
+                    step="0.0001"
+                    {...register("mortgage_rate_10y", { valueAsNumber: true })}
+                    className={errors.mortgage_rate_10y ? "border-red-500" : ""}
+                  />
+                  {errors.mortgage_rate_10y && (
+                    <span className="text-sm text-red-500">{errors.mortgage_rate_10y.message}</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-600 space-y-1">
+                <p>
+                  {strings.pricePerM2}: <strong>{pricePerM2Display > 0 ? pricePerM2Display.toFixed(0) : "—"}</strong>
+                </p>
+                <p>
+                  {strings.renoPerM2}: <strong>{surfaceValue ? renoCostPerM2Display.toFixed(0) : "—"}</strong>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Financing & Fees */}
+          {currentStep === 4 && (
+            <div className="space-y-4">
               <div>
-                <Label htmlFor="expected_rent_month">Expected Rent/Month (EUR) [optional]</Label>
+                <Label htmlFor="expected_rent_month">{strings.rentMonth}</Label>
                 <Input
                   id="expected_rent_month"
                   type="number"
@@ -321,7 +606,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div>
-                <Label htmlFor="holding_months">Holding Period (months)</Label>
+                <Label htmlFor="holding_months">{strings.holdingMonths}</Label>
                 <Input
                   id="holding_months"
                   type="number"
@@ -332,21 +617,11 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                 {errors.holding_months && <span className="text-sm text-red-500">{errors.holding_months.message}</span>}
               </div>
 
-              <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-600">
-                Market indexes, mortgage rates, and renovation budgets are prefilled from our dataset for the selected
-                city. Adjust the economic levers above to fine-tune ROI.
-              </div>
-            </div>
-          )}
-
-          {/* Step 4: Financing & Fees */}
-          {currentStep === 4 && (
-            <div className="space-y-4">
               <div className="rounded-lg border border-gray-200 p-4">
-                <h3 className="mb-4 font-semibold">Financing</h3>
+                <h3 className="mb-4 font-semibold">{strings.financingTitle}</h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="ltv">Loan-to-Value (LTV)</Label>
+                    <Label htmlFor="ltv">{strings.ltv}</Label>
                     <Input
                       id="ltv"
                       type="number"
@@ -357,16 +632,16 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                       placeholder="0.80"
                     />
                   </div>
-                <div>
-                  <Label htmlFor="fix_years">Fixed Rate Period</Label>
-                  <Select
-                    value={values.financing?.fix_years ? String(values.financing?.fix_years) : ""}
-                    onValueChange={(value) => setValue("financing.fix_years", Number(value))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+                  <div>
+                    <Label htmlFor="fix_years">{strings.fixYears}</Label>
+                    <Select
+                      value={values.financing?.fix_years ? String(values.financing?.fix_years) : ""}
+                      onValueChange={(value) => setValue("financing.fix_years", Number(value))}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
                         <SelectItem value="1">1 year</SelectItem>
                         <SelectItem value="5">5 years</SelectItem>
                         <SelectItem value="10">10 years</SelectItem>
@@ -379,10 +654,10 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
               </div>
 
               <div className="rounded-lg border border-gray-200 p-4">
-                <h3 className="mb-4 font-semibold">Fees</h3>
+                <h3 className="mb-4 font-semibold">{strings.feesTitle}</h3>
                 <div className="space-y-3">
                   <div>
-                    <Label htmlFor="grunderwerb_pct">Ground Acquisition Tax (%)</Label>
+                    <Label htmlFor="grunderwerb_pct">{strings.grunderwerb}</Label>
                     <Input
                       id="grunderwerb_pct"
                       type="number"
@@ -392,7 +667,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="notary_pct">Notary Fee (%)</Label>
+                    <Label htmlFor="notary_pct">{strings.notaryFee}</Label>
                     <Input
                       id="notary_pct"
                       type="number"
@@ -402,7 +677,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="agent_pct">Agent Fee (%) [optional]</Label>
+                    <Label htmlFor="agent_pct">{strings.agentFee}</Label>
                     <Input
                       id="agent_pct"
                       type="number"
@@ -412,7 +687,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="other">Other Fees (€) [optional]</Label>
+                    <Label htmlFor="other">{strings.otherFees}</Label>
                     <Input
                       id="other"
                       type="number"
@@ -440,16 +715,21 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
             onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
             disabled={currentStep === 1}
           >
-            Back
+            {strings.back}
           </Button>
 
           {currentStep < steps.length ? (
             <Button type="button" onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}>
-              Next
+              {strings.next}
             </Button>
           ) : (
-            <Button type="submit" disabled={!isValid || isPending} className="bg-blue-600 hover:bg-blue-700">
-              {isPending ? "Analyzing..." : "Run Analysis"}
+            <Button
+              type="button"
+              onClick={handleSubmit(onSubmit)}
+              disabled={!isValid || isPending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isPending ? "Analyzing..." : strings.runAnalysis}
             </Button>
           )}
         </div>

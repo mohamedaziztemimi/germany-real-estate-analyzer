@@ -1,5 +1,6 @@
-﻿import { Card } from "@/components/ui/card"
+import { Card } from "@/components/ui/card"
 import type { PredictionResponse } from "@/lib/schemas"
+import { useLanguage } from "@/lib/language-context"
 
 interface KpiTilesProps {
   prediction: PredictionResponse
@@ -12,21 +13,25 @@ const euroFormatter = new Intl.NumberFormat("de-DE", {
 })
 
 export function KpiTiles({ prediction }: KpiTilesProps) {
+  const { strings } = useLanguage()
+
   const kpis = [
     {
-      label: "Estimated ROI",
+      label: strings.estimatedROI,
       value: `${(prediction.roi_estimated * 100).toFixed(1)}%`,
-      detail: "Net gain relative to the capital deployed.",
+      detail: strings.kpiRoiDetail,
     },
     {
-      label: "Cap Rate",
-      value: prediction.cap_rate ? `${(prediction.cap_rate * 100).toFixed(1)}%` : "N/A",
-      detail: "Annual rent divided by the invested amount.",
+      label: strings.capRate,
+      value: prediction.cap_rate ? `${(prediction.cap_rate * 100).toFixed(1)}%` : strings.capRateNA,
+      detail: strings.kpiCapDetail,
     },
     {
-      label: "Price per m\u00b2 (post-reno)",
-      value: prediction.price_post_reno_per_m2 ? euroFormatter.format(prediction.price_post_reno_per_m2) : "N/A",
-      detail: "Projected resale value per square metre after works.",
+      label: strings.pricePerM2PostReno,
+      value: prediction.price_post_reno_per_m2
+        ? euroFormatter.format(prediction.price_post_reno_per_m2)
+        : strings.capRateNA,
+      detail: strings.kpiPriceDetail,
     },
   ]
 
@@ -42,4 +47,3 @@ export function KpiTiles({ prediction }: KpiTilesProps) {
     </div>
   )
 }
-

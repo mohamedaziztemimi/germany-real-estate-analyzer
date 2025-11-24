@@ -18,13 +18,39 @@ export function normalizePrediction(
   const predictedPricePerM2 = response?.price_post_reno_per_m2 ?? 0
   const investment = calculateInvestment(payload)
   const rent = payload.expected_rent_month ?? 0
-  const rentalIncome = rent * (payload.holding_months ?? 0)
+  const holdingYears = Math.max(0, (payload.holding_months ?? 0) / 12)
+  const appreciation =
+    (response?.assumptions as any)?.annual_appreciation_rate ??
+    payload.annual_appreciation_rate ??
+    0
+
+  // Respect backend ROI when provided; otherwise compute with appreciation & holding period
+  const roiFromBackend = response?.roi_estimated
+  const capRateFromBackend = response?.cap_rate
+
   const postRenoValue = predictedPricePerM2 * payload.surface_m2
-  const roiRaw = investment ? (postRenoValue + rentalIncome - investment) / investment : 0
-  const roi = clampValue(Number.isFinite(roiRaw) ? roiRaw : 0, ROI_MIN, ROI_MAX)
-  const capRateRaw = investment ? (rent * 12) / investment : undefined
+  const futureSalePrice =
+    postRenoValue * Math.pow(1 + appreciation, holdingYears || 0)
+
+  const roiTotalRaw = investment ? (futureSalePrice - investment) / investment : 0
+  const roiAnnualRaw =
+    holdingYears > 0 ? Math.pow(1 + roiTotalRaw, 1 / holdingYears) - 1 : roiTotalRaw
+
+  const roi = Number.isFinite(roiFromBackend ?? roiAnnualRaw)
+    ? clampValue(roiFromBackend ?? roiAnnualRaw, ROI_MIN, ROI_MAX)
+    : 0
+
+  const capRateRaw =
+    capRateFromBackend !== undefined
+      ? capRateFromBackend
+      : investment
+        ? (rent * 12) / investment
+        : undefined
   const capRate =
-    capRateRaw !== undefined && Number.isFinite(capRateRaw) ? clampValue(capRateRaw, CAP_RATE_MIN, CAP_RATE_MAX) : undefined
+    capRateRaw !== undefined && Number.isFinite(capRateRaw)
+      ? clampValue(capRateRaw, CAP_RATE_MIN, CAP_RATE_MAX)
+      : undefined
+
   const decision = roi >= ROI_THRESHOLD ? "Buy" : "Don't buy"
   const confidence = clampConfidence(0.55 + roi * 1.5)
   const drivers = buildDrivers(payload, predictedPricePerM2, response?.drivers)

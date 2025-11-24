@@ -14,15 +14,14 @@ export default function ForgotPasswordPage() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [isSent, setIsSent] = useState(false)
-  const [token, setToken] = useState("")
+  const [code, setCode] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [formError, setFormError] = useState<string | null>(null)
   const [resetSuccess, setResetSuccess] = useState(false)
-  const [devToken, setDevToken] = useState<string | null>(null)
-  const { mutate, isPending, error } = useForgotPasswordMutation()
+  const { mutate: sendResetEmail, isPending, error } = useForgotPasswordMutation()
   const {
-    mutate: resetPassword,
+    mutate: submitNewPassword,
     isPending: isResetting,
     error: resetError,
   } = useResetPasswordMutation()
@@ -34,29 +33,28 @@ export default function ForgotPasswordPage() {
     }
   }, [searchParams])
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleEmailSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    mutate(
+    sendResetEmail(
       { email },
       {
-        onSuccess: (data) => {
+        onSuccess: () => {
           setIsSent(true)
-          if (data?.token) {
-            setToken(data.token)
-            setDevToken(data.token)
-          } else {
-            setDevToken(null)
-          }
+          setFormError(null)
+          setResetSuccess(false)
+          setCode("")
+          setPassword("")
+          setConfirmPassword("")
         },
       },
     )
   }
 
-  const handleResetSubmit = (event: React.FormEvent) => {
+  const handleCodeSubmit = (event: React.FormEvent) => {
     event.preventDefault()
     setFormError(null)
-    if (!token.trim()) {
-      setFormError("Please paste the reset code we sent to your email.")
+    if (!/^\d{6}$/.test(code.trim())) {
+      setFormError("Enter the 6-digit code we emailed you.")
       return
     }
     if (password.length < 8) {
@@ -67,8 +65,8 @@ export default function ForgotPasswordPage() {
       setFormError("Passwords do not match.")
       return
     }
-    resetPassword(
-      { token: token.trim(), password },
+    submitNewPassword(
+      { email, code: code.trim(), password },
       {
         onSuccess: () => {
           setResetSuccess(true)
@@ -80,13 +78,15 @@ export default function ForgotPasswordPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <Card className="p-8">
-          <h1 className="mb-2 text-2xl font-bold text-center">Forgot password?</h1>
-          <p className="mb-6 text-center text-gray-600">
-            Enter the email tied to your account and we'll send you a reset link.
-          </p>
+        <Card className="p-8 space-y-6">
+          <div>
+            <h1 className="mb-2 text-2xl font-bold text-center">Forgot password?</h1>
+            <p className="text-center text-gray-600">
+              Enter the email tied to your account and we&apos;ll send you a 6-digit reset code.
+            </p>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleEmailSubmit} className="space-y-4">
             <div>
               <Label htmlFor="email">Email address</Label>
               <Input
@@ -105,46 +105,37 @@ export default function ForgotPasswordPage() {
               </Alert>
             )}
 
-            {isSent && (
+            {isSent && !resetSuccess && (
               <Alert className="border-green-200 bg-green-50">
                 <AlertDescription className="text-green-700">
-                  If that email is registered, you'll receive reset instructions shortly.
+                  We sent a 6-digit verification code to your email. Enter it below with your new password to finish.
                 </AlertDescription>
               </Alert>
             )}
 
             <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isPending}>
-              {isPending ? "Sending..." : "Send reset link"}
+              {isPending ? "Sending..." : "Send reset code"}
             </Button>
           </form>
 
           {isSent && (
-            <div className="mt-8 border-t border-gray-100 pt-6">
+            <div className="border-t border-gray-100 pt-6">
               <h2 className="text-lg font-semibold text-gray-900">Enter your reset code</h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Check your inbox for the reset code. Paste it below along with your new password.
-              </p>
+              <p className="mt-1 text-sm text-gray-600">Code expires in 10 minutes for your security.</p>
 
-              {devToken && (
-                <Alert className="mt-4 border-blue-200 bg-blue-50">
-                  <AlertDescription className="text-sm text-blue-800">
-                    Email delivery isn't configured in this environment. Use this temporary code to reset your password:
-                    <span className="mt-1 block break-all font-mono text-base text-blue-900">{devToken}</span>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <form onSubmit={handleResetSubmit} className="mt-4 space-y-4">
+              <form onSubmit={handleCodeSubmit} className="mt-4 space-y-4">
                 <div>
-                  <Label htmlFor="token">Reset code</Label>
+                  <Label htmlFor="reset-code">Reset code</Label>
                   <Input
-                    id="token"
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                    placeholder="Paste the code from your email"
-                    required
+                    id="reset-code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="123456"
+                    inputMode="numeric"
+                    maxLength={6}
                   />
                 </div>
+
                 <div>
                   <Label htmlFor="new-password">New password</Label>
                   <Input
@@ -156,6 +147,7 @@ export default function ForgotPasswordPage() {
                     required
                   />
                 </div>
+
                 <div>
                   <Label htmlFor="confirm-password">Confirm password</Label>
                   <Input
@@ -183,7 +175,7 @@ export default function ForgotPasswordPage() {
                 {resetSuccess && (
                   <Alert className="border-green-200 bg-green-50">
                     <AlertDescription className="text-green-700">
-                      Password updated successfully. You can now sign in with your new password.
+                      Password updated successfully. You can sign in with your new password now.
                     </AlertDescription>
                   </Alert>
                 )}
@@ -195,7 +187,7 @@ export default function ForgotPasswordPage() {
             </div>
           )}
 
-          <div className="mt-6 text-center text-sm text-gray-600">
+          <div className="text-center text-sm text-gray-600">
             Remembered your password?{" "}
             <Link href="/signin" className="text-blue-600 hover:underline font-medium">
               Back to sign in

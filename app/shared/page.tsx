@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import Link from "next/link"
 import { AuthGuard } from "@/components/AuthGuard"
@@ -6,26 +6,28 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useSharedAnalyses } from "@/lib/hooks"
+import { useLanguage } from "@/lib/language-context"
 
 function SharedAnalysesContent() {
   const { data, isLoading, error } = useSharedAnalyses()
+  const { strings } = useLanguage()
 
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Discussion Board</h1>
-            <p className="text-sm text-gray-500">See what your teammates are evaluating and jump into the discussion.</p>
+            <h1 className="text-3xl font-bold">{strings.discussionsTitle}</h1>
+            <p className="text-sm text-gray-500">{strings.discussionsSubtitle}</p>
           </div>
           <Link href="/analyze">
-            <Button className="bg-blue-600 hover:bg-blue-700">New Analysis</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">{strings.analysesNew}</Button>
           </Link>
         </div>
 
         {error && (
           <Card className="border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            Unable to load discussion threads. Please try again in a moment.
+            {strings.discussionsFailed}
           </Card>
         )}
 
@@ -45,7 +47,9 @@ function SharedAnalysesContent() {
               <Card key={share.id} className="p-6">
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                    <span>Shared by {share.shared_by.email}</span>
+                    <span>
+                      {strings.discussionsSharedBy} {share.shared_by.email}
+                    </span>
                     <span>•</span>
                     <span>{new Date(share.created_at).toLocaleString()}</span>
                   </div>
@@ -56,19 +60,22 @@ function SharedAnalysesContent() {
                     </div>
                     <div className="flex gap-6 text-sm text-gray-600">
                       <span>
-                        Decision: <strong className={share.analysis.response.decision === "Buy" ? "text-green-600" : "text-red-600"}>{share.analysis.response.decision}</strong>
+                        {strings.analysesDecision}:{" "}
+                        <strong className={share.analysis.response.decision === "Buy" ? "text-green-600" : "text-red-600"}>
+                          {share.analysis.response.decision}
+                        </strong>
                       </span>
                       <span>
-                        ROI: <strong>{(share.analysis.response.roi_estimated * 100).toFixed(1)}%</strong>
+                        {strings.analysesROI}: <strong>{(share.analysis.response.roi_estimated * 100).toFixed(1)}%</strong>
                       </span>
                       <span>
-                        Confidence: <strong>{(share.analysis.response.confidence * 100).toFixed(0)}%</strong>
+                        {strings.analysesConfidence}: <strong>{(share.analysis.response.confidence * 100).toFixed(0)}%</strong>
                       </span>
                     </div>
                   </div>
                   <div className="flex justify-end">
                     <Link href={`/shared/${share.id}`}>
-                      <Button variant="outline">View & Comment</Button>
+                      <Button variant="outline">{strings.discussionsView}</Button>
                     </Link>
                   </div>
                 </div>
@@ -77,7 +84,7 @@ function SharedAnalysesContent() {
           </div>
         ) : (
           <Card className="p-12 text-center">
-            <p className="text-gray-500">No discussions yet.</p>
+            <p className="text-gray-500">{strings.discussionsEmpty}</p>
           </Card>
         )}
       </div>

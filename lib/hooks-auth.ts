@@ -54,6 +54,7 @@ export function useForgotPasswordMutation() {
 
 export function useResetPasswordMutation() {
   return useMutation({
-    mutationFn: ({ token, password }: { token: string; password: string }) => resetPassword(token, password),
+    mutationFn: ({ email, code, password }: { email: string; code: string; password: string }) =>
+      resetPassword(email, code, password),
   })
 }

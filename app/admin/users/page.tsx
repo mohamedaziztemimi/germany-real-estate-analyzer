@@ -8,9 +8,11 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { useUsers, useUpdateUserMutation, useDeleteUserMutation, useCreateUserMutation } from "@/lib/hooks"
+import { useLanguage } from "@/lib/language-context"
 import { AlertCircle, Trash2 } from "lucide-react"
 
 function UsersContent() {
+  const { strings } = useLanguage()
   const { data, isLoading, error } = useUsers()
   const { mutate: saveUser, isPending: isSaving } = useUpdateUserMutation()
   const { mutate: removeUser, isPending: isDeleting } = useDeleteUserMutation()
@@ -65,23 +67,23 @@ function UsersContent() {
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex items-center justify-between gap-3">
-          <h1 className="text-3xl font-bold">Users Management</h1>
+          <h1 className="text-3xl font-bold">{strings.usersTitle}</h1>
           <Button variant="outline" onClick={() => setShowAddForm((v) => !v)}>
-            {showAddForm ? "Close" : "Add User"}
+            {showAddForm ? strings.usersClose : strings.usersAdd}
           </Button>
         </div>
 
         {showAddForm && (
           <Card className="mb-8 border border-gray-200 p-4">
-            <h2 className="text-lg font-semibold mb-3">Add User</h2>
+            <h2 className="text-lg font-semibold mb-3">{strings.usersAdd}</h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Input
-                placeholder="Email"
+                placeholder={strings.usersEmail}
                 value={newUser.email}
                 onChange={(e) => setNewUser((prev) => ({ ...prev, email: e.target.value }))}
               />
               <Input
-                placeholder="Password"
+                placeholder={strings.usersPassword}
                 type="password"
                 value={newUser.password}
                 onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))}
@@ -94,17 +96,17 @@ function UsersContent() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="user">User</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
+                  <SelectItem value="user">{strings.usersUser}</SelectItem>
+                  <SelectItem value="admin">{strings.usersAdmin}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="mt-3 flex gap-3">
               <Button onClick={handleCreate} disabled={isCreating}>
-                {isCreating ? "Creating..." : "Create"}
+                {isCreating ? strings.usersCreating : strings.usersCreate}
               </Button>
               <Button variant="ghost" onClick={() => setShowAddForm(false)} disabled={isCreating}>
-                Cancel
+                {strings.usersCancel}
               </Button>
             </div>
           </Card>
@@ -114,99 +116,57 @@ function UsersContent() {
           <Card className="border-red-200 bg-red-50 p-4 mb-6">
             <div className="flex gap-2 text-red-700">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <p>Failed to load users</p>
+              <p>{strings.usersFailed}</p>
             </div>
           </Card>
         )}
 
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="border-b border-gray-200 bg-white">
-              <tr>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Email</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Role</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Created</th>
-                <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 bg-white">
-              {isLoading ? (
-                [...Array(5)].map((_, i) => (
-                  <tr key={i}>
-                    <td className="px-6 py-4">
-                      <Skeleton className="h-4 w-40" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <Skeleton className="h-4 w-20" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <Skeleton className="h-4 w-24" />
-                    </td>
-                    <td className="px-6 py-4">
-                      <Skeleton className="h-4 w-20" />
-                    </td>
-                  </tr>
-                ))
-              ) : data?.users.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-6 py-8 text-center text-gray-500">
-                    No users found
-                  </td>
-                </tr>
-              ) : (
-                data?.users.map((user) => (
-                  <tr key={user.id}>
-                    <td className="px-6 py-4 text-sm">
-                      <Input
-                        value={drafts[user.id]?.email ?? user.email}
-                        onChange={(e) => handleChange(user.id, "email", e.target.value)}
-                        className="w-full"
-                      />
-                    </td>
-                    <td className="px-6 py-4 text-sm">
-                      <Select
-                        value={drafts[user.id]?.role ?? user.role}
-                        onValueChange={(role: "user" | "admin") => handleChange(user.id, "role", role)}
-                      >
-                        <SelectTrigger className="w-24">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {user.created_at ? new Date(user.created_at).toLocaleDateString() : "—"}
-                    </td>
-                    <td className="px-6 py-4 text-sm space-x-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={isSaving || isDeleting}
-                        onClick={() => handleSave(user.id)}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={isSaving || isDeleting}
-                        onClick={() => handleDelete(user.id)}
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {data && <p className="mt-4 text-sm text-gray-500">Total users: {data.total}</p>}
+        {isLoading ? (
+          <div className="space-y-3">
+            {[...Array(5)].map((_, idx) => (
+              <Card key={idx} className="p-4">
+                <Skeleton className="h-4 w-1/3 mb-2" />
+                <Skeleton className="h-4 w-1/2" />
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {data?.users?.map((user: any) => (
+              <Card key={user.id} className="p-4 flex items-center gap-3">
+                <Input
+                  value={drafts[user.id]?.email ?? user.email}
+                  onChange={(e) => handleChange(user.id, "email", e.target.value)}
+                />
+                <Select
+                  value={drafts[user.id]?.role ?? user.role}
+                  onValueChange={(value) => handleChange(user.id, "role", value)}
+                >
+                  <SelectTrigger className="w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">{strings.usersUser}</SelectItem>
+                    <SelectItem value="admin">{strings.usersAdmin}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="ml-auto flex gap-2">
+                  <Button size="sm" onClick={() => handleSave(user.id)} disabled={isSaving}>
+                    {strings.usersCreate}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleDelete(user.id)}
+                    disabled={isDeleting}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   )
@@ -214,7 +174,7 @@ function UsersContent() {
 
 export default function UsersPage() {
   return (
-    <AuthGuard requiredRole="admin">
+    <AuthGuard>
       <UsersContent />
     </AuthGuard>
   )

@@ -1,7 +1,6 @@
-"use client"
+﻿"use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { useAnalyticsSummary } from "@/lib/hooks"
 import { AuthGuard } from "@/components/AuthGuard"
 import { ChatDrawer } from "@/components/ChatDrawer"
@@ -10,10 +9,12 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { MessageSquare, AlertCircle } from "lucide-react"
 import Link from "next/link"
+import { useLanguage } from "@/lib/language-context"
 
 function DashboardContent() {
   const [isChatOpen, setIsChatOpen] = useState(false)
   const { data, isLoading, error } = useAnalyticsSummary()
+  const { strings } = useLanguage()
   const totalRequests = data?.total_requests ?? 0
   const showEmptyState = !isLoading && (!data || totalRequests === 0 || !!error)
 
@@ -21,17 +22,16 @@ function DashboardContent() {
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
+          <h1 className="text-3xl font-bold">{strings.dashboardTitle}</h1>
           <Button onClick={() => setIsChatOpen(true)} className="bg-blue-600 hover:bg-blue-700" variant="default">
             <MessageSquare className="h-4 w-4 mr-2" />
-            Ask AI
+            {strings.askAI}
           </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          {/* Total Requests */}
           <Card className="p-6">
-            <p className="text-sm font-medium text-gray-600">Total Requests</p>
+            <p className="text-sm font-medium text-gray-600">{strings.totalRequests}</p>
             {isLoading ? (
               <Skeleton className="mt-2 h-8 w-16" />
             ) : (
@@ -39,9 +39,8 @@ function DashboardContent() {
             )}
           </Card>
 
-          {/* Average Confidence */}
           <Card className="p-6">
-            <p className="text-sm font-medium text-gray-600">Avg Confidence</p>
+            <p className="text-sm font-medium text-gray-600">{strings.avgConfidence}</p>
             {isLoading ? (
               <Skeleton className="mt-2 h-8 w-16" />
             ) : (
@@ -51,9 +50,8 @@ function DashboardContent() {
             )}
           </Card>
 
-          {/* Buy Rate */}
           <Card className="p-6">
-            <p className="text-sm font-medium text-gray-600">Buy Rate</p>
+            <p className="text-sm font-medium text-gray-600">{strings.buyRate}</p>
             {isLoading ? (
               <Skeleton className="mt-2 h-8 w-16" />
             ) : (
@@ -61,9 +59,8 @@ function DashboardContent() {
             )}
           </Card>
 
-          {/* Average ROI */}
           <Card className="p-6">
-            <p className="text-sm font-medium text-gray-600">Average ROI</p>
+            <p className="text-sm font-medium text-gray-600">{strings.avgRoi}</p>
             {isLoading ? (
               <Skeleton className="mt-2 h-8 w-16" />
             ) : (
@@ -73,16 +70,18 @@ function DashboardContent() {
         </div>
 
         {showEmptyState && (
-          <Card className="p-8 text-center">
+          <Card className="p-12 text-center mt-12">
             <div className="flex flex-col items-center gap-3 text-gray-500">
-              <AlertCircle className="h-5 w-5" />
-              <p>You haven’t run any analysis yet.</p>
+              <AlertCircle className="h-6 w-6" />
+              <p className="text-base">{strings.noAnalyses}</p>
             </div>
           </Card>
         )}
 
         {data?.updated_at && !showEmptyState && (
-          <p className="mt-8 text-sm text-gray-500">Last updated: {new Date(data.updated_at).toLocaleString()}</p>
+          <p className="mt-8 text-sm text-gray-500">
+            {strings.lastUpdated}: {new Date(data.updated_at).toLocaleString()}
+          </p>
         )}
 
         <ChatDrawer isOpen={isChatOpen} onClose={() => setIsChatOpen(false)} />
@@ -92,18 +91,19 @@ function DashboardContent() {
 }
 
 function DashboardFallback() {
+  const { strings } = useLanguage()
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="rounded-lg bg-white p-12 shadow-sm text-center">
-          <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-          <p className="text-gray-600 mb-6">Sign in to view your analytics dashboard.</p>
+          <h2 className="text-2xl font-bold mb-4">{strings.dashboard}</h2>
+          <p className="text-gray-600 mb-6">{strings.dashboardPrompt}</p>
           <div className="flex gap-4 justify-center">
             <Link href="/signin">
-              <Button className="bg-blue-600 hover:bg-blue-700">Sign In</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700">{strings.signIn}</Button>
             </Link>
             <Link href="/signup">
-              <Button variant="outline">Sign Up</Button>
+              <Button variant="outline">{strings.signUp}</Button>
             </Link>
           </div>
         </div>

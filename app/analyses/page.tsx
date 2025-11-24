@@ -8,9 +8,11 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAnalysesList, useDeleteAnalysisMutation } from "@/lib/hooks"
+import { useLanguage } from "@/lib/language-context"
 import { AlertCircle, Trash2 } from "lucide-react"
 
 function AnalysisContent() {
+  const { strings } = useLanguage()
   const [page, setPage] = useState(1)
   const { data, isLoading, error } = useAnalysesList(page)
   const { mutate: deleteAnalysis, isPending: isDeleting } = useDeleteAnalysisMutation()
@@ -30,9 +32,9 @@ function AnalysisContent() {
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">My Analysis</h1>
+          <h1 className="text-3xl font-bold">{strings.analysesTitle}</h1>
           <Link href="/analyze">
-            <Button className="bg-blue-600 hover:bg-blue-700">New Analysis</Button>
+            <Button className="bg-blue-600 hover:bg-blue-700">{strings.analysesNew}</Button>
           </Link>
         </div>
 
@@ -41,8 +43,7 @@ function AnalysisContent() {
             <div className="flex gap-2 text-red-700 items-start">
               <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
               <div>
-                <p className="font-medium">Failed to load analysis data</p>
-                <p className="text-sm mt-1">Make sure the backend API is running</p>
+                <p className="font-medium">{strings.analysesFailed}</p>
               </div>
             </div>
           </Card>
@@ -60,9 +61,9 @@ function AnalysisContent() {
             </>
           ) : data?.items.length === 0 ? (
             <Card className="p-12 text-center">
-              <p className="text-gray-500">No analysis available yet.</p>
+              <p className="text-gray-500">{strings.analysesEmpty}</p>
               <Link href="/analyze" className="mt-4 inline-block">
-                <Button className="bg-blue-600 hover:bg-blue-700">Analyze Property</Button>
+                <Button className="bg-blue-600 hover:bg-blue-700">{strings.analysesCta}</Button>
               </Link>
             </Card>
           ) : (
@@ -78,16 +79,17 @@ function AnalysisContent() {
                     {analysis.notes && <p className="text-gray-600 text-sm mb-3">{analysis.notes}</p>}
                     <div className="flex gap-4 text-sm text-gray-500">
                       <span>
-                        Decision:{" "}
+                        {strings.analysesDecision}:{" "}
                         <strong className={analysis.response.decision === "Buy" ? "text-green-600" : "text-red-600"}>
                           {analysis.response.decision}
                         </strong>
                       </span>
                       <span>
-                        ROI: <strong>{(analysis.response.roi_estimated * 100).toFixed(2)}%</strong>
+                        {strings.analysesROI}: <strong>{(analysis.response.roi_estimated * 100).toFixed(2)}%</strong>
                       </span>
                       <span>
-                        Confidence: <strong>{(analysis.response.confidence * 100).toFixed(0)}%</strong>
+                        {strings.analysesConfidence}:{" "}
+                        <strong>{(analysis.response.confidence * 100).toFixed(0)}%</strong>
                       </span>
                       <span className="ml-auto">{new Date(analysis.created_at).toLocaleDateString()}</span>
                     </div>
@@ -112,7 +114,7 @@ function AnalysisContent() {
         {data && data.total > (data.page_size || 20) && (
           <div className="mt-8 flex justify-center gap-2">
             <Button variant="outline" onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}>
-              Previous
+              {strings.paginationPrev}
             </Button>
             <span className="flex items-center px-4">
               Page {page} of {Math.ceil(data.total / (data.page_size || 20))}
@@ -122,7 +124,7 @@ function AnalysisContent() {
               onClick={() => setPage(page + 1)}
               disabled={page >= Math.ceil(data.total / (data.page_size || 20))}
             >
-              Next
+              {strings.paginationNext}
             </Button>
           </div>
         )}
@@ -132,18 +134,19 @@ function AnalysisContent() {
 }
 
 function AnalysisFallback() {
+  const { strings } = useLanguage()
   return (
     <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-4xl">
         <div className="rounded-lg bg-white p-12 shadow-sm text-center">
-          <h2 className="text-2xl font-bold mb-4">My Analysis</h2>
-          <p className="text-gray-600 mb-6">Sign in to view and manage your saved analysis.</p>
+          <h2 className="text-2xl font-bold mb-4">{strings.analysesSigninTitle}</h2>
+          <p className="text-gray-600 mb-6">{strings.analysesSigninDesc}</p>
           <div className="flex gap-4 justify-center">
             <Link href="/signin">
-              <Button className="bg-blue-600 hover:bg-blue-700">Sign In</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700">{strings.analysesSignin}</Button>
             </Link>
             <Link href="/signup">
-              <Button variant="outline">Sign Up</Button>
+              <Button variant="outline">{strings.analysesSignup}</Button>
             </Link>
           </div>
         </div>

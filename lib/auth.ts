@@ -60,16 +60,16 @@ export async function signOut(): Promise<void> {
   setAccessToken(null)
 }
 
-export async function requestPasswordReset(email: string): Promise<{ message: string; token?: string | null }> {
-  return apiFetch<{ message: string; token?: string | null }>("/auth/forgot-password", {
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return apiFetch<{ message: string }>("/auth/forgot-password", {
     method: "POST",
     json: { email },
   })
 }
 
-export async function resetPassword(token: string, password: string): Promise<{ message: string }> {
+export async function resetPassword(email: string, code: string, password: string): Promise<{ message: string }> {
   return apiFetch<{ message: string }>("/auth/reset-password", {
     method: "POST",
-    json: { token, password },
+    json: { email, code, password },
   })
 }

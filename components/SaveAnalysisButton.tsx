@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAnalysesMutation } from "@/lib/hooks"
+import { useLanguage } from "@/lib/language-context"
 import type { PropertyPayload, PredictionResponse } from "@/lib/schemas"
 
 interface SaveAnalysisButtonProps {
@@ -17,6 +18,7 @@ interface SaveAnalysisButtonProps {
 }
 
 export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysisButtonProps) {
+  const { strings } = useLanguage()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(`Analysis - ${payload.city}`)
   const [notes, setNotes] = useState("")
@@ -39,11 +41,11 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">Save Analysis</Button>
+        <Button variant="outline">{strings.saveAnalysis}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Save Analysis</DialogTitle>
+          <DialogTitle>{strings.dialogSaveTitle}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
@@ -56,7 +58,7 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
             />
           </div>
           <div>
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">{strings.dialogSaveNotes}</Label>
             <Textarea
               id="notes"
               value={notes}
@@ -72,10 +74,10 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
           )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
+              {strings.dialogCancel}
             </Button>
             <Button onClick={handleSave} disabled={!title || isPending} className="bg-blue-600 hover:bg-blue-700">
-              {isPending ? "Saving..." : "Save"}
+              {isPending ? "Saving..." : strings.dialogSaveCta}
             </Button>
           </div>
         </div>

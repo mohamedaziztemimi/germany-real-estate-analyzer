@@ -245,7 +245,11 @@ function AnalysisDetailContent({ id }: AnalysisDetailContentProps) {
           <KpiTiles prediction={normalizedPrediction} />
           <DriversList drivers={normalizedPrediction.drivers} />
           <ExplanationsPanel explanations={normalizedPrediction.explanations} />
-          <AssumptionsPanel assumptions={normalizedPrediction.assumptions} />
+          <AssumptionsPanel
+            assumptions={normalizedPrediction.assumptions}
+            prediction={normalizedPrediction}
+            payload={analysis.payload}
+          />
           <WarningsAlert warnings={normalizedPrediction.warnings} />
 
           <Card className="p-6 bg-blue-50 border-blue-200">

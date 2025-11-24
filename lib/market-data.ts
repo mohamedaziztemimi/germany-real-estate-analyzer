@@ -33,9 +33,10 @@ const BASE_RENO_COST_PER_M2: Record<RenovationLevel, number> = {
   full: 520,
 }
 
-const CONDITION_MULTIPLIER: Record<NonNullable<PropertyPayload["condition"]>, number> = {
+const CONDITION_MULTIPLIER: Record<string, number> = {
   poor: 1.4,
   average: 1,
+  medium: 1,
   good: 0.65,
   renovated: 0.25,
 }
