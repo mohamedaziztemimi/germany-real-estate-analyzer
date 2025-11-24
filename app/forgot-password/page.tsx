@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { useForgotPasswordMutation, useResetPasswordMutation } from "@/lib/hooks-auth"
 import { Card } from "@/components/ui/card"
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState("")
   const [isSent, setIsSent] = useState(false)
@@ -196,5 +196,13 @@ export default function ForgotPasswordPage() {
         </Card>
       </div>
     </main>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <ForgotPasswordContent />
+    </Suspense>
   )
 }

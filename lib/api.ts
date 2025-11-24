@@ -1,8 +1,11 @@
 import type { PropertyPayload, PredictionResponse, APIError } from "./schemas"
 
 // Default to same-origin API so auth cookies work with SameSite=Lax.
-// Override via NEXT_PUBLIC_API_BASE_URL for deployments that need a full URL.
-export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1").replace(/\/$/, "")
+// Override via NEXT_PUBLIC_API_BASE_URL (or fallback REACT_APP_API_URL) for deployments that need a full URL.
+export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env.REACT_APP_API_URL ?? "/api/v1").replace(
+  /\/$/,
+  "",
+)
 
 const TOKEN_STORAGE_KEY = "rea_access_token"
 
