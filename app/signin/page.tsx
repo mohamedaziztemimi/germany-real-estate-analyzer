@@ -29,7 +29,7 @@ function SignInContent() {
       { email, password },
       {
         onSuccess: () => {
-          const next = searchParams.get("next") || "/dashboard"
+          const next = searchParams.get("next") || "/"
           router.push(next)
         },
       },
