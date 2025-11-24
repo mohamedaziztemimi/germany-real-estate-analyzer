@@ -9,9 +9,9 @@ export function HomeLanding() {
   const { strings } = useLanguage()
 
   const features = [
-    { icon: "🚀", title: strings.feature1Title, description: strings.feature1Description },
-    { icon: "🤖", title: strings.feature2Title, description: strings.feature2Description },
-    { icon: "📊", title: strings.feature3Title, description: strings.feature3Description },
+    { icon: "[AI]", title: strings.feature1Title, description: strings.feature1Description },
+    { icon: "[ROI]", title: strings.feature2Title, description: strings.feature2Description },
+    { icon: "[Data]", title: strings.feature3Title, description: strings.feature3Description },
   ]
 
   const marketData = [
@@ -57,7 +57,7 @@ export function HomeLanding() {
             <ul className="space-y-2 text-gray-700">
               {marketData.map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <span aria-hidden="true">•</span>
+                  <span aria-hidden="true">-</span>
                   <span>{item}</span>
                 </li>
               ))}
@@ -68,7 +68,7 @@ export function HomeLanding() {
             <ul className="space-y-2 text-gray-700">
               {deliverables.map((item) => (
                 <li key={item} className="flex items-center gap-2">
-                  <span aria-hidden="true">•</span>
+                  <span aria-hidden="true">-</span>
                   <span>{item}</span>
                 </li>
               ))}
