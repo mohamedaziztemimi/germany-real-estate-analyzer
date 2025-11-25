@@ -127,7 +127,7 @@ function ChartsSection({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80">
+      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900">{strings.chartProjected}</h3>
           <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 ring-1 ring-blue-100">
@@ -210,7 +210,7 @@ function ChartsSection({
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80">
+      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-lg font-semibold text-slate-900">{strings.chartInvest}</h3>
         <div className="relative mx-auto h-40 w-40">
           <div
@@ -241,7 +241,7 @@ function ChartsSection({
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80">
+      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-lg font-semibold text-slate-900">{strings.chartDrivers}</h3>
         <div className="space-y-3">
           {driverItems.map((d) => {
@@ -265,7 +265,7 @@ function ChartsSection({
         </div>
       </Card>
 
-      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80">
+      <Card className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h3 className="mb-3 text-lg font-semibold text-slate-900">{strings.chartRoiScenarios}</h3>
         <div className="flex h-40 items-end gap-4">
           {roiScenarios.map((s) => {
@@ -474,7 +474,7 @@ function AnalysisDetailContent({ id }: AnalysisDetailContentProps) {
           </div>
         </div>
 
-        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/80">
+        <Card className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           {isEditing ? (
             <div className="space-y-4">
               <div>
@@ -506,7 +506,7 @@ function AnalysisDetailContent({ id }: AnalysisDetailContentProps) {
         <div className="space-y-6">
           <DecisionCard prediction={normalizedPrediction} />
           <KpiTiles prediction={normalizedPrediction} />
-          <Card className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center shadow-sm shadow-slate-200/80">
+          <Card className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center shadow-sm">
             <div className="flex flex-col items-center">
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Projection horizon</span>
               <span className="text-sm text-slate-600">Extend charts beyond your holding period.</span>
@@ -564,7 +564,7 @@ function AnalysisDetailContent({ id }: AnalysisDetailContentProps) {
             </div>
           </Card>
 
-          <Card className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/80 sm:flex-row sm:items-center sm:justify-between">
+          <Card className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-lg font-semibold text-slate-900">Download Analysis PDF</h3>
               <p className="text-sm text-slate-600">Generate a shareable memo with the property data and model highlights.</p>
@@ -580,7 +580,7 @@ function AnalysisDetailContent({ id }: AnalysisDetailContentProps) {
           </Card>
 
           {shareId && shareDetail && (
-            <Card className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/80">
+            <Card className="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div>
                 <h3 className="text-lg font-semibold text-slate-900">Shared with workspace</h3>
                 <p className="text-sm text-slate-600">
