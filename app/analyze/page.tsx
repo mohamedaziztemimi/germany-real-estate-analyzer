@@ -11,6 +11,7 @@ import { WarningsAlert } from "@/components/WarningsAlert"
 import { ExplanationsPanel } from "@/components/ExplanationsPanel"
 import { SaveAnalysisButton } from "@/components/SaveAnalysisButton"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { useLanguage } from "@/lib/language-context"
 import type { PropertyPayload, PredictionResponse } from "@/lib/schemas"
 
@@ -21,15 +22,18 @@ function ChartsSection({
   payload,
   strings,
   language,
+  projectionYears,
 }: {
   result: PredictionResponse
   payload: PropertyPayload
   strings: Record<string, string>
   language: "en" | "de"
+  projectionYears: number
 }) {
   const locale = language === "de" ? "de-DE" : "en-US"
   const appreciation =
     (result.assumptions as any)?.annual_appreciation_rate ?? payload.annual_appreciation_rate ?? 0.015
+  const horizonYears = Math.max(1, projectionYears || 1)
   const holdingYears = (payload.holding_months ?? 12) / 12
   const postRenoValue =
     result.post_reno_value_today ??
@@ -40,7 +44,7 @@ function ChartsSection({
   const totalInvested = purchasePrice + renoCost + feesTotal
 
   const projected: Point[] = []
-  const maxYears = Math.max(3, Math.ceil(holdingYears))
+  const maxYears = Math.max(1, Math.ceil(horizonYears))
   const maxYBase = Math.max(postRenoValue, 1)
   for (let i = 0; i <= maxYears; i++) {
     const y = postRenoValue * Math.pow(1 + appreciation, i)
@@ -61,7 +65,7 @@ function ChartsSection({
   ]
 
   const roiScenario = (rate: number) => {
-    const future = postRenoValue * Math.pow(1 + rate, holdingYears)
+    const future = postRenoValue * Math.pow(1 + rate, horizonYears)
     return totalInvested ? (future - totalInvested) / totalInvested : 0
   }
   const roiScenarios = [
@@ -90,6 +94,8 @@ function ChartsSection({
   const pieTotal = pieParts.reduce((sum, p) => sum + p.value, 0) || 1
   let pieOffset = 0
   const yearUnit = strings.chartYearUnit || (language === "de" ? "J" : "yr")
+  const fmt = (v: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(v)
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -128,27 +134,29 @@ function ChartsSection({
             {maxYears} {yearUnit}
           </text>
           <text x="5" y="8" fontSize="3" fill="#64748b">
-            €{Math.round(maxY).toLocaleString(locale)}
+            {fmt(maxY)}
           </text>
-          {projected.map((p) => {
-            const x = (p.x / maxYears) * 90 + 5
-            const y = 55 - (p.y / maxY) * 45
-            return (
-              <text key={`val-${p.x}`} x={x} y={y - 2} fontSize="2.5" fill="#0f172a" textAnchor="middle">
-                €{Math.round(p.y).toLocaleString(locale)}
-              </text>
-            )
-          })}
+              {projected.map((p) => {
+                const x = (p.x / maxYears) * 90 + 5
+                const y = 55 - (p.y / maxY) * 45
+                const shouldLabel =
+                  maxYears <= 5 || p.x === 0 || p.x === maxYears || p.x === Math.round(maxYears / 2)
+                return (
+                  <text key={`val-${p.x}`} x={x} y={y - 2} fontSize="2.5" fill="#0f172a" textAnchor="middle">
+                    {shouldLabel ? fmt(p.y) : ""}
+                  </text>
+                )
+              })}
         </svg>
         <div className="mt-2 flex flex-col gap-1 sm:flex-row sm:justify-between text-xs text-slate-600">
           <span>
-            {strings.chartToday}: <strong>€{Math.round(postRenoValue || 0).toLocaleString(locale)}</strong>
+            {strings.chartToday}: <strong>{fmt(postRenoValue || 0)}</strong>
           </span>
           <span>
             {strings.chartFuture
-              .replace("{years}", holdingYears.toFixed(1))
+              .replace("{years}", horizonYears.toFixed(1))
               .replace("{unit}", yearUnit)}{" "}
-            <strong>€{Math.round(projected[projected.length - 1]?.y || 0).toLocaleString(locale)}</strong>
+            <strong>{fmt(projected[projected.length - 1]?.y || 0)}</strong>
           </span>
         </div>
       </div>
@@ -238,6 +246,7 @@ export default function AnalyzePage() {
   const [payload, setPayload] = useState<PropertyPayload | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [formKey, setFormKey] = useState(0)
+  const [projectionYears, setProjectionYears] = useState(5)
   const router = useRouter()
 
   const handleFormSubmit = (formPayload: PropertyPayload, result: PredictionResponse) => {
@@ -258,12 +267,13 @@ export default function AnalyzePage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <main className="relative isolate min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(37,99,235,0.10),transparent_32%),radial-gradient(circle_at_82%_10%,rgba(16,185,129,0.12),transparent_28%),radial-gradient(circle_at_60%_85%,rgba(59,130,246,0.10),transparent_30%)]" />
+      <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Form Section */}
           <div className="lg:sticky lg:top-8 lg:h-fit">
-            <div className="rounded-lg bg-white p-6 shadow-sm">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm shadow-slate-200/80">
               <h1 className="mb-6 text-2xl font-bold">{strings.analysisTitle}</h1>
               <PropertyForm key={formKey} onSuccess={handleFormSubmit} />
             </div>
@@ -283,7 +293,37 @@ export default function AnalyzePage() {
               </div>
               <DecisionCard prediction={result} />
               <KpiTiles prediction={result} />
-              <ChartsSection result={result} payload={payload} strings={strings as any} language={language} />
+
+              <Card className="flex flex-col items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-4 text-center shadow-sm shadow-slate-200/80">
+                <div className="flex flex-col items-center">
+                  <span className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Projection horizon</span>
+                  <span className="text-sm text-slate-600">Extend charts beyond your holding period.</span>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[1, 3, 5, 10].map((yr) => (
+                    <Button
+                      key={yr}
+                      variant={projectionYears === yr ? "default" : "outline"}
+                      onClick={() => setProjectionYears(yr)}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold ${
+                        projectionYears === yr
+                          ? "bg-blue-600 text-white shadow-md shadow-blue-500/30"
+                          : "border-slate-300 text-slate-800 hover:border-blue-500 hover:text-blue-700"
+                      }`}
+                    >
+                      {yr}y
+                    </Button>
+                  ))}
+                </div>
+              </Card>
+
+              <ChartsSection
+                result={result}
+                payload={payload}
+                strings={strings as any}
+                language={language}
+                projectionYears={projectionYears}
+              />
               <DriversList drivers={result.drivers} />
               <ExplanationsPanel explanations={result.explanations} />
               <AssumptionsPanel assumptions={result.assumptions} prediction={result} payload={payload} />

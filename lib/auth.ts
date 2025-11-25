@@ -10,6 +10,10 @@ export interface AuthResponse {
   user: User
 }
 
+export interface SignupStartResponse {
+  message: string
+}
+
 type AuthTokens = {
   access_token?: string
   token?: string
@@ -33,10 +37,17 @@ async function resolveAuthUser(data: AuthLoginResponse): Promise<AuthResponse> {
   return getSession()
 }
 
-export async function signUp(email: string, password: string): Promise<AuthResponse> {
-  const data = await apiFetch<AuthLoginResponse>("/auth/signup", {
+export async function startSignup(email: string, password: string): Promise<SignupStartResponse> {
+  return apiFetch<SignupStartResponse>("/auth/signup/start", {
     method: "POST",
     json: { email, password },
+  })
+}
+
+export async function completeSignup(email: string, code: string): Promise<AuthResponse> {
+  const data = await apiFetch<AuthLoginResponse>("/auth/signup/complete", {
+    method: "POST",
+    json: { email, code },
   })
 
   return resolveAuthUser(data)

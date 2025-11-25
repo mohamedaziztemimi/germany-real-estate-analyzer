@@ -1,14 +1,122 @@
-"use client"
+﻿"use client"
 
 import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { useForgotPasswordMutation, useResetPasswordMutation } from "@/lib/hooks-auth"
-import { Card } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { Mail, KeyRound, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useForgotPasswordMutation, useResetPasswordMutation } from "@/lib/hooks-auth"
+
+function StatusMessage({ message, tone }: { message?: string; tone: "error" | "info" | "success" }) {
+  if (!message) return null
+  const toneClasses =
+    tone === "error"
+      ? "border-rose-200 bg-rose-50 text-rose-700"
+      : tone === "success"
+        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+        : "border-blue-200 bg-blue-50 text-blue-700"
+  return (
+    <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium ${toneClasses}`}>
+      {tone === "error" ? "Action needed" : tone === "success" ? "Success" : "Notice"}
+      <span className="sr-only">:</span>
+      <span>{message}</span>
+    </div>
+  )
+}
+
+function InputField({
+  id,
+  label,
+  type = "text",
+  value,
+  onChange,
+  placeholder,
+  icon,
+  helper,
+  autoComplete,
+}: {
+  id: string
+  label: string
+  type?: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string
+  icon: React.ReactNode
+  helper?: string
+  autoComplete?: string
+}) {
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="text-sm font-semibold text-slate-900">
+        {label}
+      </label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">{icon}</span>
+        <Input
+          id={id}
+          type={type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          required
+          className="pl-11 pr-3 bg-white text-slate-900 border-slate-200 hover:border-blue-300 focus-visible:border-blue-400 focus-visible:ring-blue-300 placeholder:text-slate-400"
+        />
+      </div>
+      {helper && <p className="text-xs text-slate-600">{helper}</p>}
+    </div>
+  )
+}
+
+function PasswordField({
+  id,
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  id: string
+  label: string
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  placeholder?: string
+}) {
+  const [show, setShow] = useState(false)
+  return (
+    <div className="space-y-2">
+      <label htmlFor={id} className="text-sm font-semibold text-slate-900">
+        {label}
+      </label>
+      <div className="relative">
+        <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+          <Lock className="h-4 w-4" aria-hidden="true" />
+        </span>
+        <Input
+          id={id}
+          type={show ? "text" : "password"}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          required
+          autoComplete="off"
+          className="pl-11 pr-12 bg-white text-slate-900 border-slate-200 hover:border-blue-300 focus-visible:border-blue-400 focus-visible:ring-blue-300 placeholder:text-slate-400"
+        />
+        <button
+          type="button"
+          onClick={() => setShow((v) => !v)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-600 transition hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+          aria-pressed={show}
+        >
+          {show ? (
+            <span className="inline-flex items-center gap-1"><EyeOff className="h-4 w-4" aria-hidden="true" />Hide</span>
+          ) : (
+            <span className="inline-flex items-center gap-1"><Eye className="h-4 w-4" aria-hidden="true" />Show</span>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function ForgotPasswordContent() {
   const searchParams = useSearchParams()
@@ -76,124 +184,123 @@ function ForgotPasswordContent() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <Card className="p-8 space-y-6">
-          <div>
-            <h1 className="mb-2 text-2xl font-bold text-center">Forgot password?</h1>
-            <p className="text-center text-gray-600">
-              Enter the email tied to your account and we&apos;ll send you a 6-digit reset code.
-            </p>
+    <main className="relative isolate min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(37,99,235,0.10),transparent_32%),radial-gradient(circle_at_82%_10%,rgba(16,185,129,0.12),transparent_28%),radial-gradient(circle_at_60%_85%,rgba(59,130,246,0.10),transparent_30%)]" />
+      <div className="relative mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4 py-12 sm:px-8">
+        <div className="relative w-full max-w-2xl space-y-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/80">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Reset access</p>
+              <h1 className="text-2xl font-semibold text-slate-900">Forgot password?</h1>
+              <p className="text-sm text-slate-600">
+                Enter the email tied to your account and we will send a 6-digit reset code.
+              </p>
+            </div>
+            <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:flex">
+              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            </div>
           </div>
 
           <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="email">Email address</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-              />
-            </div>
-
-            {error && (
-              <Alert className="border-red-200 bg-red-50">
-                <AlertDescription className="text-red-700">{error.message}</AlertDescription>
-              </Alert>
-            )}
-
+            {error && <StatusMessage message={error.message} tone="error" />}
             {isSent && !resetSuccess && (
-              <Alert className="border-green-200 bg-green-50">
-                <AlertDescription className="text-green-700">
-                  We sent a 6-digit verification code to your email. Enter it below with your new password to finish.
-                </AlertDescription>
-              </Alert>
+              <StatusMessage
+                message="We sent a 6-digit verification code to your email. Enter it below with your new password to finish."
+                tone="info"
+              />
             )}
 
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isPending}>
+            <InputField
+              id="email"
+              label="Email address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              icon={<Mail className="h-4 w-4" aria-hidden="true" />}
+            />
+
+            <button
+              type="submit"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 disabled:opacity-70"
+              disabled={isPending}
+            >
               {isPending ? "Sending..." : "Send reset code"}
-            </Button>
+            </button>
           </form>
 
           {isSent && (
-            <div className="border-t border-gray-100 pt-6">
-              <h2 className="text-lg font-semibold text-gray-900">Enter your reset code</h2>
-              <p className="mt-1 text-sm text-gray-600">Code expires in 10 minutes for your security.</p>
+            <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold text-slate-900">Enter your reset code</h2>
+                <p className="text-sm text-slate-600">Code expires in 10 minutes for your security.</p>
+              </div>
 
-              <form onSubmit={handleCodeSubmit} className="mt-4 space-y-4">
-                <div>
-                  <Label htmlFor="reset-code">Reset code</Label>
-                  <Input
-                    id="reset-code"
-                    value={code}
-                    onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                    placeholder="123456"
-                    inputMode="numeric"
-                    maxLength={6}
-                  />
+              <form onSubmit={handleCodeSubmit} className="space-y-4">
+                {formError && <StatusMessage message={formError} tone="error" />}
+                {resetError && <StatusMessage message={resetError.message} tone="error" />}
+                {resetSuccess && <StatusMessage message="Password reset! You can now sign in with your new password." tone="success" />}
+
+                <div className="space-y-3">
+                  <label htmlFor="reset-code" className="text-sm font-semibold text-slate-900">
+                    Reset code
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">
+                      <KeyRound className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <Input
+                      id="reset-code"
+                      type="tel"
+                      inputMode="numeric"
+                      maxLength={6}
+                      value={code}
+                      onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder="123456"
+                      required
+                      className="pl-11 pr-3 tracking-[0.4em] text-lg bg-white text-slate-900 border-slate-200 hover:border-blue-300 focus-visible:border-blue-400 focus-visible:ring-blue-300 placeholder:text-slate-400"
+                      aria-describedby="code-helper"
+                    />
+                  </div>
+                  <p id="code-helper" className="text-xs text-slate-600">
+                    Check your inbox for the 6-digit code we emailed you.
+                  </p>
                 </div>
 
-                <div>
-                  <Label htmlFor="new-password">New password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
+                <PasswordField
+                  id="new-password"
+                  label="New password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="********"
+                />
 
-                <div>
-                  <Label htmlFor="confirm-password">Confirm password</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
+                <PasswordField
+                  id="confirm-password"
+                  label="Confirm password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="********"
+                />
 
-                {formError && (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertDescription className="text-red-700">{formError}</AlertDescription>
-                  </Alert>
-                )}
-
-                {resetError && (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertDescription className="text-red-700">{resetError.message}</AlertDescription>
-                  </Alert>
-                )}
-
-                {resetSuccess && (
-                  <Alert className="border-green-200 bg-green-50">
-                    <AlertDescription className="text-green-700">
-                      Password updated successfully. You can sign in with your new password now.
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={isResetting}>
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300 disabled:opacity-70"
+                  disabled={isResetting}
+                >
                   {isResetting ? "Updating..." : "Update password"}
-                </Button>
+                </button>
               </form>
             </div>
           )}
 
-          <div className="text-center text-sm text-gray-600">
-            Remembered your password?{" "}
-            <Link href="/signin" className="text-blue-600 hover:underline font-medium">
+          <div className="text-center text-sm text-slate-600">
+            <Link href="/signin" className="font-semibold text-blue-700 hover:text-blue-600">
               Back to sign in
             </Link>
           </div>
-        </Card>
+        </div>
       </div>
     </main>
   )
@@ -201,7 +308,7 @@ function ForgotPasswordContent() {
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center text-slate-600">Loading...</div>}>
       <ForgotPasswordContent />
     </Suspense>
   )

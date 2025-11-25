@@ -1,7 +1,16 @@
 "use client"
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getSession, signIn, signUp, signOut, requestPasswordReset, resetPassword, type User } from "./auth"
+import {
+  getSession,
+  signIn,
+  signOut,
+  requestPasswordReset,
+  resetPassword,
+  startSignup,
+  completeSignup,
+  type User,
+} from "./auth"
 
 export function useAuth() {
   return useQuery<{ user: User }>({
@@ -24,10 +33,22 @@ export function useSignInMutation() {
 }
 
 export function useSignUpMutation() {
+  return useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) => startSignup(email, password),
+  })
+}
+
+export function useSignupStartMutation() {
+  return useMutation({
+    mutationFn: ({ email, password }: { email: string; password: string }) => startSignup(email, password),
+  })
+}
+
+export function useSignupCompleteMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) => signUp(email, password),
+    mutationFn: ({ email, code }: { email: string; code: string }) => completeSignup(email, code),
     onSuccess: (data) => {
       queryClient.setQueryData(["auth", "session"], data)
     },
