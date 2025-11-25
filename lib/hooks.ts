@@ -99,7 +99,10 @@ export function useDeleteAnalysisMutation() {
   return useMutation({
     mutationFn: deleteAnalysis,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ["analyses"] })
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["analyses"] }),
+        queryClient.invalidateQueries({ queryKey: ["analytics", "summary"] }),
+      ])
     },
   })
 }

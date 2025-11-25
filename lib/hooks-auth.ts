@@ -27,6 +27,7 @@ export function useSignInMutation() {
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => signIn(email, password),
     onSuccess: (data) => {
+      queryClient.clear()
       queryClient.setQueryData(["auth", "session"], data)
     },
   })
@@ -50,6 +51,7 @@ export function useSignupCompleteMutation() {
   return useMutation({
     mutationFn: ({ email, code }: { email: string; code: string }) => completeSignup(email, code),
     onSuccess: (data) => {
+      queryClient.clear()
       queryClient.setQueryData(["auth", "session"], data)
     },
   })
@@ -61,8 +63,7 @@ export function useSignOutMutation() {
   return useMutation({
     mutationFn: signOut,
     onSuccess: () => {
-      queryClient.setQueryData(["auth", "session"], null)
-      queryClient.removeQueries({ queryKey: ["auth", "session"] })
+      queryClient.clear()
     },
   })
 }

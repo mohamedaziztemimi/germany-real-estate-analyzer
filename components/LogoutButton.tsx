@@ -3,14 +3,17 @@
 import { Button } from "@/components/ui/button"
 import { useSignOutMutation } from "@/lib/hooks-auth"
 import { useRouter } from "next/navigation"
+import { useQueryClient } from "@tanstack/react-query"
 
 export function LogoutButton() {
   const router = useRouter()
   const { mutate: signOut, isPending } = useSignOutMutation()
+  const queryClient = useQueryClient()
 
   const handleLogout = () => {
     signOut(undefined, {
       onSuccess: () => {
+        queryClient.clear()
         router.push("/")
       },
     })

@@ -5,9 +5,12 @@ import { ArrowRight, BarChart3, Clock3, Radar, ShieldCheck, TrendingUp } from "l
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/hooks-auth"
 
 export function HomeLanding() {
   const { strings } = useLanguage()
+  const { data: authData } = useAuth()
+  const isAuthenticated = !!authData?.user
 
   const featureIcons = [TrendingUp, Radar, ShieldCheck]
 
@@ -29,19 +32,39 @@ export function HomeLanding() {
               <p className="text-lg text-slate-600">{strings.heroSubtitle}</p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/signup">
-                <Button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-blue-300">
-                  {strings.heroCta}
-                </Button>
-              </Link>
-              <Link href="/signin">
-                <Button
-                  variant="outline"
-                  className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-300"
-                >
-                  {strings.signIn}
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link href="/dashboard">
+                    <Button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-blue-300">
+                      Go to dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/analyses">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-300"
+                    >
+                      View analyses
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/signup">
+                    <Button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-blue-300">
+                      {strings.heroCta}
+                    </Button>
+                  </Link>
+                  <Link href="/signin">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-300"
+                    >
+                      {strings.signIn}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">
@@ -148,19 +171,39 @@ export function HomeLanding() {
               <p className="text-sm text-blue-100/90">Transparent drivers, ROI, and confidence in one view.</p>
             </div>
             <div className="flex gap-3">
-              <Link href="/signup">
-                <Button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-lg transition hover:-translate-y-0.5">
-                  {strings.heroCta}
-                </Button>
-              </Link>
-              <Link href="/signin">
-                <Button
-                  variant="outline"
-                  className="rounded-xl border border-white/70 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
-                >
-                  {strings.signIn}
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link href="/dashboard">
+                    <Button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-lg transition hover:-translate-y-0.5">
+                      Go to dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/analyses">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border border-white/70 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                    >
+                      View analyses
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link href="/signup">
+                    <Button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-lg transition hover:-translate-y-0.5">
+                      {strings.heroCta}
+                    </Button>
+                  </Link>
+                  <Link href="/signin">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border border-white/70 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
+                    >
+                      {strings.signIn}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </section>
