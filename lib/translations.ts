@@ -1,6 +1,7 @@
 export type TranslationKeys =
   | "home"
   | "dashboard"
+  | "analyze"
   | "analyses"
   | "discussions"
   | "users"
@@ -19,6 +20,7 @@ export type TranslationKeys =
   | "lastUpdated"
   | "heroTitle"
   | "heroSubtitle"
+  | "heroGuestNote"
   | "heroCta"
   | "feature1Title"
   | "feature1Description"
@@ -37,6 +39,7 @@ export type TranslationKeys =
   | "dataList2Item3"
   | "dataList2Item4"
   | "analysisTitle"
+  | "analysisGuestNote"
   | "analysisSuccess"
   | "analysisEmpty"
   | "runAnalysis"
@@ -158,6 +161,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
   en: {
     home: "Home",
     dashboard: "Dashboard",
+    analyze: "Analyze",
     analyses: "Analyses",
     discussions: "Discussions",
     users: "Users",
@@ -177,6 +181,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     heroTitle: "Germany Real Estate Investment Intelligence",
     heroSubtitle:
       "AI-powered analysis to make smarter real estate investment decisions. Get instant ROI estimates, confidence scores, and clear value drivers.",
+    heroGuestNote: "Run analyses without an account. Sign in or create one to save and revisit them.",
     heroCta: "Start analysis",
     feature1Title: "Instant ROI analysis",
     feature1Description: "Get estimated ROI, cap rate, and post-renovation valuations in seconds.",
@@ -195,6 +200,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     dataList2Item3: "Feature importance highlights",
     dataList2Item4: "Transparent market assumptions",
     analysisTitle: "Property analyzer",
+    analysisGuestNote: "Analysis is open to everyone. Sign in or create an account to save and organize your results.",
     analysisSuccess: "Analysis completed successfully.",
     analysisEmpty: "Fill out the form and submit to see analysis results here.",
     runAnalysis: "Run analysis",
@@ -316,6 +322,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
   de: {
     home: "Startseite",
     dashboard: "Dashboard",
+    analyze: "Analysieren",
     analyses: "Analysen",
     discussions: "Diskussionen",
     users: "Benutzer",
@@ -335,6 +342,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     heroTitle: "Intelligenz fuer Immobilieninvestitionen in Deutschland",
     heroSubtitle:
       "KI-gestuetzte Analysen fuer bessere Entscheidungen. Sofortige Rendite, Vertrauenswert und klare Werttreiber.",
+    heroGuestNote: "Analysen lassen sich ohne Konto starten. Zum Speichern und Teilen bitte anmelden oder registrieren.",
     heroCta: "Analyse starten",
     feature1Title: "Schnelle ROI-Analyse",
     feature1Description: "Rendite, Cap Rate und Wert nach Sanierung in Sekunden.",
@@ -353,6 +361,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     dataList2Item3: "Wichtigste Einflussfaktoren",
     dataList2Item4: "Transparente Marktannahmen",
     analysisTitle: "Objektanalyse",
+    analysisGuestNote: "Analysen sind ohne Konto moeglich. Zum Speichern bitte anmelden oder ein Konto anlegen.",
     analysisSuccess: "Analyse erfolgreich abgeschlossen.",
     analysisEmpty: "Formular ausfuellen und senden, um Ergebnisse zu sehen.",
     runAnalysis: "Analyse starten",

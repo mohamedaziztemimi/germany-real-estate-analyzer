@@ -29,6 +29,7 @@ function NavigationContent() {
     () =>
       [
         { href: "/", label: strings.home, private: false },
+        { href: "/analyze", label: strings.analyze, private: false },
         { href: "/dashboard", label: strings.dashboard, private: true },
         { href: "/analyses", label: strings.analyses, private: true },
         { href: "/shared", label: strings.discussions, private: true },

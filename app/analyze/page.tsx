@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { PropertyForm } from "@/components/PropertyForm"
@@ -12,6 +13,7 @@ import { ExplanationsPanel } from "@/components/ExplanationsPanel"
 import { SaveAnalysisButton } from "@/components/SaveAnalysisButton"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { useAuth } from "@/lib/hooks-auth"
 import { useLanguage } from "@/lib/language-context"
 import type { PropertyPayload, PredictionResponse } from "@/lib/schemas"
 
@@ -242,12 +244,15 @@ function ChartsSection({
 
 export default function AnalyzePage() {
   const { strings, language } = useLanguage()
+  const { data: authData, isLoading: authLoading } = useAuth()
   const [result, setResult] = useState<PredictionResponse | null>(null)
   const [payload, setPayload] = useState<PropertyPayload | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [formKey, setFormKey] = useState(0)
   const [projectionYears, setProjectionYears] = useState(5)
   const router = useRouter()
+  const isAuthenticated = !!authData?.user
+  const showAuthReminder = !authLoading && !isAuthenticated
 
   const handleFormSubmit = (formPayload: PropertyPayload, result: PredictionResponse) => {
     setPayload(formPayload)
@@ -285,6 +290,25 @@ export default function AnalyzePage() {
               <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-green-700 text-sm font-medium">
                 {strings.analysisSuccess}
               </div>
+              {showAuthReminder && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <span>{strings.analysisGuestNote}</span>
+                    <div className="flex gap-2">
+                      <Link href="/signin?next=/analyze">
+                        <Button variant="outline" size="sm">
+                          {strings.signIn}
+                        </Button>
+                      </Link>
+                      <Link href="/signup">
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                          {strings.signUp}
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="flex gap-2">
                 <SaveAnalysisButton payload={payload} response={result} onSuccess={handleSaveSuccess} />
                 <Button variant="outline" onClick={handleNewAnalysis}>

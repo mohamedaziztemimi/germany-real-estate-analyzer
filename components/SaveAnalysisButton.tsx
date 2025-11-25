@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -7,8 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Spinner } from "@/components/ui/spinner"
 import { useAnalysesMutation } from "@/lib/hooks"
 import { useLanguage } from "@/lib/language-context"
+import { useAuth } from "@/lib/hooks-auth"
 import type { PropertyPayload, PredictionResponse } from "@/lib/schemas"
 
 interface SaveAnalysisButtonProps {
@@ -19,10 +22,12 @@ interface SaveAnalysisButtonProps {
 
 export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysisButtonProps) {
   const { strings } = useLanguage()
+  const { data: authData, isLoading: authLoading } = useAuth()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(`Analysis - ${payload.city}`)
   const [notes, setNotes] = useState("")
   const { mutate, isPending, error } = useAnalysesMutation()
+  const isAuthenticated = !!authData?.user
 
   const handleSave = () => {
     mutate(
@@ -30,7 +35,7 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
       {
         onSuccess: (result) => {
           setOpen(false)
-          setTitle("")
+          setTitle(`Analysis - ${payload.city}`)
           setNotes("")
           onSuccess?.(result.id)
         },
@@ -47,40 +52,61 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
         <DialogHeader>
           <DialogTitle>{strings.dialogSaveTitle}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="title">Title</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Berlin 3BR Apartment"
-            />
+        {authLoading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-600">
+            <Spinner className="h-4 w-4" />
+            <span>Checking your session...</span>
           </div>
-          <div>
-            <Label htmlFor="notes">{strings.dialogSaveNotes}</Label>
-            <Textarea
-              id="notes"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              placeholder="Add any notes about this analysis..."
-              rows={3}
-            />
+        ) : isAuthenticated ? (
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Title</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g., Berlin 3BR Apartment"
+              />
+            </div>
+            <div>
+              <Label htmlFor="notes">{strings.dialogSaveNotes}</Label>
+              <Textarea
+                id="notes"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Add any notes about this analysis..."
+                rows={3}
+              />
+            </div>
+            {error && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-700">{error.message}</AlertDescription>
+              </Alert>
+            )}
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setOpen(false)}>
+                {strings.dialogCancel}
+              </Button>
+              <Button onClick={handleSave} disabled={!title || isPending} className="bg-blue-600 hover:bg-blue-700">
+                {isPending ? "Saving..." : strings.dialogSaveCta}
+              </Button>
+            </div>
           </div>
-          {error && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-700">{error.message}</AlertDescription>
+        ) : (
+          <div className="space-y-4">
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertDescription className="text-amber-800">{strings.analysisGuestNote}</AlertDescription>
             </Alert>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              {strings.dialogCancel}
-            </Button>
-            <Button onClick={handleSave} disabled={!title || isPending} className="bg-blue-600 hover:bg-blue-700">
-              {isPending ? "Saving..." : strings.dialogSaveCta}
-            </Button>
+            <div className="flex justify-end gap-2">
+              <Link href="/signin?next=/analyze">
+                <Button variant="outline">{strings.signIn}</Button>
+              </Link>
+              <Link href="/signup">
+                <Button className="bg-blue-600 hover:bg-blue-700">{strings.signUp}</Button>
+              </Link>
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -50,22 +50,28 @@ export function HomeLanding() {
                 </>
               ) : (
                 <>
-                  <Link href="/signup">
+                  <Link href="/analyze">
                     <Button className="rounded-xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 focus-visible:ring-2 focus-visible:ring-blue-300">
                       {strings.heroCta}
                     </Button>
                   </Link>
-                  <Link href="/signin">
+                  <Link href="/signup">
                     <Button
                       variant="outline"
                       className="rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition hover:-translate-y-0.5 hover:border-blue-500 hover:text-blue-700 focus-visible:ring-2 focus-visible:ring-blue-300"
                     >
-                      {strings.signIn}
+                      {strings.signUp}
                     </Button>
+                  </Link>
+                  <Link href="/signin" className="inline-flex items-center text-slate-600 underline-offset-2 hover:text-blue-700 hover:underline">
+                    {strings.signIn}
                   </Link>
                 </>
               )}
             </div>
+            {!isAuthenticated && (
+              <p className="text-sm text-slate-500">{strings.heroGuestNote}</p>
+            )}
             <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
               <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 ring-1 ring-slate-200">
                 <ShieldCheck className="h-4 w-4 text-emerald-500" aria-hidden="true" /> GDPR ready
@@ -191,18 +197,21 @@ export function HomeLanding() {
                 </>
               ) : (
                 <>
-                  <Link href="/signup">
+                  <Link href="/analyze">
                     <Button className="rounded-xl bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-lg transition hover:-translate-y-0.5">
                       {strings.heroCta}
                     </Button>
                   </Link>
-                  <Link href="/signin">
+                  <Link href="/signup">
                     <Button
                       variant="outline"
                       className="rounded-xl border border-white/70 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/20"
                     >
-                      {strings.signIn}
+                      {strings.signUp}
                     </Button>
+                  </Link>
+                  <Link href="/signin" className="inline-flex items-center text-blue-100 underline-offset-2 hover:text-white hover:underline">
+                    {strings.signIn}
                   </Link>
                 </>
               )}
