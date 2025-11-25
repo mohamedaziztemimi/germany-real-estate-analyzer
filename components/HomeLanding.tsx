@@ -116,17 +116,24 @@ export function HomeLanding() {
           </div>
         </section>
 
-        {/* Trust logos */}
+        {/* Use cases */}
         <section className="relative space-y-4">
           <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.28em] text-slate-500">
             <span className="h-px w-12 bg-slate-200" aria-hidden="true" />
-            Trusted by teams at
+            Built for deal teams
             <span className="h-px w-12 bg-slate-200" aria-hidden="true" />
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-slate-600 text-sm">
-            {["Northwind", "Globex", "Initech", "Umbrella", "Stark Industries", "Wayne Assets"].map((brand) => (
-              <span key={brand} className="rounded-full bg-white px-4 py-2 ring-1 ring-slate-200 shadow-sm">
-                {brand}
+          <div className="flex flex-wrap justify-center gap-3 text-slate-700 text-sm">
+            {[
+              "Acquisitions & underwriting",
+              "Buy/renovate/sell strategies",
+              "Hold vs. dispose decisions",
+              "Loan & covenant checks",
+              "Investor reporting",
+              "Market comps & signals",
+            ].map((label) => (
+              <span key={label} className="rounded-full bg-white px-4 py-2 ring-1 ring-slate-200 shadow-sm">
+                {label}
               </span>
             ))}
           </div>
