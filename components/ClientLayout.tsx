@@ -182,20 +182,23 @@ function LayoutChrome({ children }: { children: React.ReactNode }) {
           </div>
           <div className="md:col-span-4 space-y-2 text-xs text-slate-600">
             <div>
-              <span className="font-semibold text-slate-900">Legal Disclaimer:</span> This tool provides AI-generated
-              estimations for informational and educational purposes only. It is not financial advice, investment
-              advice, or a certified real-estate appraisal. All results are approximate and should not be used as the
-              sole basis for any buying or selling decision. By using this tool, you agree that the creator assumes no
-              liability for decisions made based on these estimations.
+              <span className="font-semibold text-slate-900">Legal Disclaimer (Haftungsausschluss):</span> This tool
+              generates AI-based estimations for informational and educational purposes only. It does not constitute
+              financial advice, investment advice, tax advice, legal advice, or a certified real-estate appraisal. All
+              outputs are approximations and may contain errors or omissions. Users should not rely solely on these
+              results for purchase, sale, or financing decisions. By using this tool, you agree that the creator assumes
+              no liability for any decisions made based on these estimations.
             </div>
             <div>
-              <span className="font-semibold text-slate-900">Privacy Notice:</span> This app processes the data you
-              submit (including account/login information) solely to provide the service. Replace this line with your
-              deployed privacy policy or state explicitly if no personal data is collected.
+              <span className="font-semibold text-slate-900">Privacy Notice (Datenschutzhinweis):</span> This application
+              processes only the data you manually provide in order to generate predictions. No personal data is sold or
+              shared with third parties. If login or account features are added in the future, stored information will
+              be used exclusively for authentication and providing the service. Please replace this paragraph with your
+              final GDPR-compliant privacy policy once your product moves beyond MVP stage.
             </div>
             <div>
-              <span className="font-semibold text-slate-900">Impressum:</span> Add operator name, city, and contact
-              email here to meet German imprint requirements.
+              <span className="font-semibold text-slate-900">Impressum (§5 TMG):</span> Betreiber: Mohamed Aziz Temimi;
+              Düsseldorf, Germany; E-mail: mohamedaziz.temimi@epsrit.tn
             </div>
           </div>
         </div>
