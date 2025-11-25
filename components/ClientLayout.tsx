@@ -180,6 +180,24 @@ function LayoutChrome({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           </div>
+          <div className="md:col-span-4 space-y-2 text-xs text-slate-600">
+            <div>
+              <span className="font-semibold text-slate-900">Legal Disclaimer:</span> This tool provides AI-generated
+              estimations for informational and educational purposes only. It is not financial advice, investment
+              advice, or a certified real-estate appraisal. All results are approximate and should not be used as the
+              sole basis for any buying or selling decision. By using this tool, you agree that the creator assumes no
+              liability for decisions made based on these estimations.
+            </div>
+            <div>
+              <span className="font-semibold text-slate-900">Privacy Notice:</span> This app processes the data you
+              submit (including account/login information) solely to provide the service. Replace this line with your
+              deployed privacy policy or state explicitly if no personal data is collected.
+            </div>
+            <div>
+              <span className="font-semibold text-slate-900">Impressum:</span> Add operator name, city, and contact
+              email here to meet German imprint requirements.
+            </div>
+          </div>
         </div>
         <div className="border-t border-slate-200 py-4 text-center text-xs text-slate-500">
           &copy; 2025 Germany Real Estate Investment Platform. All rights reserved.
