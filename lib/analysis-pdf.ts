@@ -40,6 +40,13 @@ function formatDriverEffect(effect?: number): string {
   return `${effect >= 0 ? "+" : ""}${percent}%`
 }
 
+const DRIVER_DESCRIPTIONS: Record<string, string> = {
+  projected_uplift_pct: "Projected uplift versus purchase",
+  market_greix_index: "Local GREIX momentum",
+  market_hpi_index: "House price index trend",
+  renovation_cost_intensity: "Renovation cost intensity",
+}
+
 export async function generateAnalysisPdf(analysis: Analysis, prediction: PredictionResponse) {
   const { jsPDF } = await import("jspdf")
   const doc = new jsPDF()
@@ -53,14 +60,39 @@ export async function generateAnalysisPdf(analysis: Analysis, prediction: Predic
     (fees.other ?? 0)
   const totalInvested = (property.price_buy ?? 0) + (property.reno_cost ?? 0) + feesTotal
 
+  const horizonYears = Math.max(1, Math.round((property.holding_months ?? 12) / 12))
+  const appreciation = (prediction.assumptions as any)?.annual_appreciation_rate ?? property.annual_appreciation_rate ?? 0.015
+  const postRenoValue =
+    prediction.post_reno_value_today ??
+    (prediction.price_post_reno_per_m2 && property.surface_m2 ? prediction.price_post_reno_per_m2 * property.surface_m2 : 0)
+  const projections = Array.from({ length: horizonYears + 1 }, (_, i) => ({
+    year: i,
+    value: postRenoValue * Math.pow(1 + appreciation, i),
+  }))
+
+  const roiScenario = (rate: number) => {
+    const future = postRenoValue * Math.pow(1 + rate, horizonYears)
+    return totalInvested ? (future - totalInvested) / totalInvested : 0
+  }
+  const roiScenarios = [
+    { label: "Pessimistic", value: roiScenario(appreciation - 0.01) },
+    { label: "Base", value: roiScenario(appreciation) },
+    { label: "Optimistic", value: roiScenario(appreciation + 0.01) },
+  ]
+
   const driverLines =
     prediction.drivers && prediction.drivers.length > 0
-      ? prediction.drivers.map((driver) => `${toTitleCase(driver.feature)}: ${formatDriverEffect(driver.effect)}`)
+      ? prediction.drivers.map((driver) => {
+          const desc = DRIVER_DESCRIPTIONS[driver.feature] ?? toTitleCase(driver.feature)
+          return `${desc}: ${formatDriverEffect(driver.effect)}`
+        })
       : ["No driver data provided."]
 
   const propertyLines = [
-    `Location: ${property.city}, ${property.plz} (${property.property_type})`,
-    `Size and layout: ${property.surface_m2} m2, ${property.rooms} rooms`,
+    `Location: ${property.city}, ${property.plz}`,
+    `Type: ${property.property_type}`,
+    `Surface: ${property.surface_m2} m²`,
+    `Rooms: ${property.rooms}`,
     `Year and condition: ${property.year_built ?? "N/A"}, ${toTitleCase(property.condition ?? "")}`,
   ]
 
@@ -74,12 +106,12 @@ export async function generateAnalysisPdf(analysis: Analysis, prediction: Predic
   ]
 
   const modelLines = [
-    `Decision: ${prediction.decision}`,
-    `Confidence: ${formatPercent(prediction.confidence)}`,
+    `Investment decision: ${prediction.decision}`,
+    `Confidence level: ${formatPercent(prediction.confidence)}`,
     `Estimated ROI: ${formatPercent(prediction.roi_estimated)}`,
     `Cap rate: ${formatPercent(prediction.cap_rate)}`,
-    `Post-renovation price per m2: ${formatCurrency(prediction.price_post_reno_per_m2)}`,
-    `Post-renovation value: ${formatCurrency(prediction.post_reno_value_today ?? 0)}`,
+    `Price per m² (post-reno): ${formatCurrency(prediction.price_post_reno_per_m2)}`,
+    `Post-renovation value today: ${formatCurrency(prediction.post_reno_value_today ?? 0)}`,
   ]
 
   const assumptionLines =
@@ -89,10 +121,11 @@ export async function generateAnalysisPdf(analysis: Analysis, prediction: Predic
 
   doc.setFont("helvetica", "bold")
   doc.setFontSize(18)
-  doc.text("Investment Analysis Summary", 14, 18)
+  doc.text(analysis.title || "Analysis", 14, 18)
   doc.setFontSize(12)
   doc.setFont("helvetica", "normal")
-  let cursorY = 28
+  doc.text(`Created ${new Date(analysis.created_at).toLocaleDateString()}`, 14, 24)
+  let cursorY = 32
 
   const addSection = (title: string, lines: string[]) => {
     if (!lines.length) return
@@ -121,11 +154,28 @@ export async function generateAnalysisPdf(analysis: Analysis, prediction: Predic
     }
   }
 
-  addSection("Property overview", propertyLines)
-  addSection("Financials", financialLines)
-  addSection("Model highlights", modelLines)
-  addSection("Drivers", driverLines)
-  addSection("Assumptions", assumptionLines)
+  addSection("Investment decision", [modelLines[0]])
+  addSection("Key metrics", modelLines.slice(1))
+
+  const projectionLines = projections.map((p) => `${p.year} yr: ${formatCurrency(p.value)}`)
+  addSection("Projection horizon", [`Holding: ${horizonYears} yr`, "Extend charts beyond your holding period.", "1y | 3y | 5y | 10y"])
+  addSection("Projected value over holding period", projectionLines)
+
+  const breakdown = [
+    `Purchase price: ${formatCurrency(property.price_buy)}`,
+    `Renovation: ${formatCurrency(property.reno_cost)}`,
+    `Acquisition fees: ${formatCurrency(feesTotal)}`,
+    `Total invested: ${formatCurrency(totalInvested)}`,
+  ]
+  addSection("Investment breakdown", breakdown)
+
+  const roiLines = roiScenarios.map((s) => `${s.label}: ${formatPercent(s.value)}`)
+  addSection("ROI scenarios", roiLines)
+
+  addSection("Key value drivers", driverLines)
+  addSection("Summary and assumptions", assumptionLines)
+  addSection("Property details", propertyLines)
+  addSection("Financial summary", financialLines)
   if (analysis.notes) {
     addSection("Notes", [analysis.notes])
   }
