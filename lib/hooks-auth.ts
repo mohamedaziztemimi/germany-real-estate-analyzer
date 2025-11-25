@@ -62,8 +62,16 @@ export function useSignOutMutation() {
 
   return useMutation({
     mutationFn: signOut,
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["auth"] })
+      queryClient.setQueryData(["auth", "session"], null)
+    },
     onSuccess: () => {
-      queryClient.clear()
+      queryClient.invalidateQueries({ queryKey: ["auth"] })
+    },
+    onSettled: () => {
+      // Ensure any active auth queries refetch and see the cleared session.
+      queryClient.invalidateQueries({ queryKey: ["auth"] })
     },
   })
 }

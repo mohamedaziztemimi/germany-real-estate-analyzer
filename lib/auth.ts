@@ -67,8 +67,12 @@ export async function getSession(): Promise<AuthResponse> {
 }
 
 export async function signOut(): Promise<void> {
-  await apiFetch("/auth/logout", { method: "POST" })
-  setAccessToken(null)
+  try {
+    await apiFetch("/auth/logout", { method: "POST" })
+  } finally {
+    // Always clear the token locally so UI reflects logout immediately even if the request fails.
+    setAccessToken(null)
+  }
 }
 
 export async function requestPasswordReset(email: string): Promise<{ message: string }> {
