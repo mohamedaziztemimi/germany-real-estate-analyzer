@@ -18,6 +18,7 @@ export function useAuth() {
     queryFn: getSession,
     retry: false,
     staleTime: Number.POSITIVE_INFINITY,
+    refetchOnMount: true,
   })
 }
 
@@ -67,7 +68,8 @@ export function useSignOutMutation() {
       queryClient.setQueryData(["auth", "session"], null)
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["auth"] })
+      // Drop any cached auth/session data so guards re-evaluate immediately.
+      queryClient.removeQueries({ queryKey: ["auth"] })
     },
     onSettled: () => {
       // Ensure any active auth queries refetch and see the cleared session.

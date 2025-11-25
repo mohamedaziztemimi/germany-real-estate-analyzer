@@ -12,6 +12,7 @@ export function LogoutButton() {
     signOut(undefined, {
       onSuccess: () => {
         router.push("/")
+        router.refresh()
       },
     })
   }
