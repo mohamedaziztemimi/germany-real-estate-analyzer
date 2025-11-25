@@ -180,7 +180,7 @@ function SignInContent() {
               label="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
+              placeholder="********"
               autoComplete="current-password"
               forgotPasswordHref={forgotPasswordHref}
             />

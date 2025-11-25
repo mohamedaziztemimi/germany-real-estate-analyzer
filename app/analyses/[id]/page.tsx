@@ -550,7 +550,7 @@ function AnalysisDetailContent({ id }: AnalysisDetailContentProps) {
                 <span className="text-slate-500">Type:</span> {analysis.payload.property_type}
               </div>
               <div>
-                <span className="text-slate-500">Surface:</span> {analysis.payload.surface_m2} m²
+                <span className="text-slate-500">Surface:</span> {analysis.payload.surface_m2} sqm
               </div>
               <div>
                 <span className="text-slate-500">Rooms:</span> {analysis.payload.rooms}

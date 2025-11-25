@@ -133,7 +133,7 @@ function SharedAnalysisContent({ shareId }: { shareId: string }) {
             <div>
               <p className="text-sm text-slate-500">Property</p>
               <p className="text-lg font-medium text-slate-900">
-                {analysis.payload.city}, {analysis.payload.plz} • {analysis.payload.surface_m2} m²
+                {analysis.payload.city}, {analysis.payload.plz} - {analysis.payload.surface_m2} sqm
               </p>
             </div>
           </div>
