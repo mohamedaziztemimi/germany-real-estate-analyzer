@@ -8,7 +8,7 @@ import { useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/hooks-auth"
 
 export function HomeLanding() {
-  const { strings } = useLanguage()
+  const { strings, language } = useLanguage()
   const { data: authData } = useAuth()
   const isAuthenticated = !!authData?.user
 
@@ -120,18 +120,13 @@ export function HomeLanding() {
         <section className="relative space-y-4">
           <div className="flex items-center justify-center gap-2 text-xs uppercase tracking-[0.28em] text-slate-500">
             <span className="h-px w-12 bg-slate-200" aria-hidden="true" />
-            Built for deal teams
+            {language === "de" ? "Fuer Deal-Teams" : "Built for deal teams"}
             <span className="h-px w-12 bg-slate-200" aria-hidden="true" />
           </div>
           <div className="flex flex-wrap justify-center gap-3 text-slate-700 text-sm">
-            {[
-              "Acquisitions & underwriting",
-              "Buy/renovate/sell strategies",
-              "Hold vs. dispose decisions",
-              "Loan & covenant checks",
-              "Investor reporting",
-              "Market comps & signals",
-            ].map((label) => (
+            {(language === "de"
+              ? ["Deal-Screening", "Sanierungs- / Exit-Plan", "Reporting & Investoren-Updates"]
+              : ["Deal screening", "Value-add plan & exit", "Reporting for investors"]).map((label) => (
               <span key={label} className="rounded-full bg-white px-4 py-2 ring-1 ring-slate-200 shadow-sm">
                 {label}
               </span>
