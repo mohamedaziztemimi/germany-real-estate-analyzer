@@ -193,8 +193,7 @@ function LayoutChrome({ children }: { children: React.ReactNode }) {
               <span className="font-semibold text-slate-900">Privacy Notice (Datenschutzhinweis):</span> This application
               processes only the data you manually provide in order to generate predictions. No personal data is sold or
               shared with third parties. If login or account features are added in the future, stored information will
-              be used exclusively for authentication and providing the service. Please replace this paragraph with your
-              final GDPR-compliant privacy policy once your product moves beyond MVP stage.
+              be used exclusively for authentication and providing the service.
             </div>
             <div>
               <span className="font-semibold text-slate-900">Impressum (§5 TMG):</span> Betreiber: Mohamed Aziz Temimi;
