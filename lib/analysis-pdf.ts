@@ -45,25 +45,43 @@ export async function generateAnalysisPdf(analysis: Analysis, prediction: Predic
   const doc = new jsPDF()
   const property = analysis.payload
   const assumptions = prediction.assumptions ?? {}
+
+  const fees = property.fees ?? {}
+  const feesTotal =
+    (property.price_buy ?? 0) *
+      ((fees.grunderwerb_pct ?? 0) / 100 + (fees.notary_pct ?? 0) / 100 + (fees.agent_pct ?? 0) / 100) +
+    (fees.other ?? 0)
+  const totalInvested = (property.price_buy ?? 0) + (property.reno_cost ?? 0) + feesTotal
+
   const driverLines =
     prediction.drivers && prediction.drivers.length > 0
-      ? prediction.drivers.map((driver) => `${toTitleCase(driver.feature)} - ${formatDriverEffect(driver.effect)} impact`)
+      ? prediction.drivers.map((driver) => `${toTitleCase(driver.feature)}: ${formatDriverEffect(driver.effect)}`)
       : ["No driver data provided."]
 
   const propertyLines = [
     `Location: ${property.city}, ${property.plz} (${property.property_type})`,
-    `Size & Layout: ${property.surface_m2} m2 | ${property.rooms} rooms`,
-    `Vintage & Condition: ${property.year_built ?? "N/A"} | ${toTitleCase(property.condition ?? "")}`,
-    `Purchase Price: ${formatCurrency(property.price_buy)} | Renovation: ${formatCurrency(property.reno_cost)}`,
-    `Holding: ${property.holding_months} months | Expected rent: ${formatCurrency(property.expected_rent_month ?? 0, " / month")}`,
+    `Size and layout: ${property.surface_m2} m2, ${property.rooms} rooms`,
+    `Year and condition: ${property.year_built ?? "N/A"}, ${toTitleCase(property.condition ?? "")}`,
   ]
+
+  const financialLines = [
+    `Purchase price: ${formatCurrency(property.price_buy)}`,
+    `Renovation: ${formatCurrency(property.reno_cost)}`,
+    `Acquisition fees: ${formatCurrency(feesTotal)}`,
+    `Total invested: ${formatCurrency(totalInvested)}`,
+    `Holding period: ${property.holding_months} months`,
+    `Expected rent: ${formatCurrency(property.expected_rent_month ?? 0, " / month")}`,
+  ]
+
   const modelLines = [
     `Decision: ${prediction.decision}`,
     `Confidence: ${formatPercent(prediction.confidence)}`,
     `Estimated ROI: ${formatPercent(prediction.roi_estimated)}`,
     `Cap rate: ${formatPercent(prediction.cap_rate)}`,
     `Post-renovation price per m2: ${formatCurrency(prediction.price_post_reno_per_m2)}`,
+    `Post-renovation value: ${formatCurrency(prediction.post_reno_value_today ?? 0)}`,
   ]
+
   const assumptionLines =
     Object.keys(assumptions).length > 0
       ? Object.entries(assumptions).map(([key, value]) => `${toTitleCase(key)}: ${value}`)
@@ -103,8 +121,9 @@ export async function generateAnalysisPdf(analysis: Analysis, prediction: Predic
     }
   }
 
-  addSection("Property Overview", propertyLines)
-  addSection("Model Highlights", modelLines)
+  addSection("Property overview", propertyLines)
+  addSection("Financials", financialLines)
+  addSection("Model highlights", modelLines)
   addSection("Drivers", driverLines)
   addSection("Assumptions", assumptionLines)
   if (analysis.notes) {
