@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { useGoogleSignInMutation } from "@/lib/hooks-auth"
 import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
+import { nanoid } from "nanoid"
 
 declare global {
   interface Window {
@@ -24,16 +25,20 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
   const initRef = useRef(false)
   const { mutate, isPending } = useGoogleSignInMutation()
 
-  // Handle redirect-based credential if present (fallback for popup blockers)
+  // Handle redirect-based credential if present (fallback for popup blockers and direct OAuth redirect)
   useEffect(() => {
     if (typeof window === "undefined") return
     const params = new URLSearchParams(window.location.search)
-    const credential = params.get("credential")
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""))
+    const credential = params.get("credential") || hashParams.get("credential") || hashParams.get("id_token")
     if (credential) {
       mutate({ credential, remember })
       params.delete("credential")
+      hashParams.delete("credential")
+      hashParams.delete("id_token")
       const next = params.toString()
-      const newUrl = `${window.location.pathname}${next ? `?${next}` : ""}${window.location.hash || ""}`
+      const hash = hashParams.toString()
+      const newUrl = `${window.location.pathname}${next ? `?${next}` : ""}${hash ? `#${hash}` : ""}`
       window.history.replaceState({}, "", newUrl)
     }
   }, [mutate, remember])
@@ -66,32 +71,33 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
       setError("Google is not ready yet. Please try again.")
       return
     }
-    const initGoogle = (mode: "popup" | "redirect") => {
-      window.google.accounts.id.initialize({
-        client_id: clientId,
-        callback: (response: any) => {
-          const credential = response?.credential
-          if (!credential) {
-            setError("No credential returned. Please try again.")
-            return
-          }
-          mutate({ credential, remember })
-        },
-        ux_mode: mode,
-        login_uri: mode === "redirect" ? window.location.href : undefined,
-      })
-    }
-
-    if (!initRef.current) {
-      initGoogle("popup")
-      initRef.current = true
-    }
+    window.google.accounts.id.initialize({
+      client_id: clientId,
+      callback: (response: any) => {
+        const credential = response?.credential
+        if (!credential) {
+          setError("No credential returned. Please try again.")
+          return
+        }
+        mutate({ credential, remember })
+      },
+      ux_mode: "redirect",
+      login_uri: window.location.href,
+    })
+    initRef.current = true
     window.google.accounts.id.prompt((notification: any) => {
       if (notification.isNotDisplayed()) {
-        // Popup blocked: try redirect mode instead
-        initGoogle("redirect")
-        window.google.accounts.id.prompt()
-        setError(null)
+        // If prompt is blocked or not shown, fall back to a direct OAuth redirect
+        const nonce = nanoid()
+        const redirectUri = window.location.href
+        const url = new URL("https://accounts.google.com/o/oauth2/v2/auth")
+        url.searchParams.set("client_id", clientId)
+        url.searchParams.set("redirect_uri", redirectUri)
+        url.searchParams.set("response_type", "id_token")
+        url.searchParams.set("scope", "openid email profile")
+        url.searchParams.set("nonce", nonce)
+        url.searchParams.set("prompt", "select_account")
+        window.location.assign(url.toString())
       }
     })
   }
