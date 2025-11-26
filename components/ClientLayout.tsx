@@ -22,10 +22,9 @@ function NavigationContent() {
   const isAuthenticated = !!authData?.user
   const isAdmin = authData?.user?.role === "admin"
   const { strings } = useLanguage()
-  const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const pathname = usePathname()
 
   const navItems = useMemo(() => {
     const items = [{ href: "/", label: strings.home, private: false }]
@@ -116,6 +115,23 @@ function LanguageSelector() {
 
 function LayoutChrome({ children }: { children: React.ReactNode }) {
   const { strings } = useLanguage()
+  const { data: authData } = useAuth()
+  const isAuthenticated = !!authData?.user
+  const isAdmin = authData?.user?.role === "admin"
+  const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const navItems = useMemo(() => {
+    const items = [{ href: "/", label: strings.home, private: false }]
+    if (!isAuthenticated) items.push({ href: "/analyze", label: strings.analyze, private: false })
+    items.push(
+      { href: "/dashboard", label: strings.dashboard, private: true },
+      { href: "/analyses", label: strings.analyses, private: true },
+      { href: "/shared", label: strings.discussions, private: true },
+      ...(isAdmin ? [{ href: "/admin/users", label: strings.users, private: true }] : []),
+    )
+    return items.filter((item) => !item.private || isAuthenticated)
+  }, [isAdmin, isAuthenticated, strings])
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
