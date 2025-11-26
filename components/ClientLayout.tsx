@@ -11,10 +11,11 @@ import { LanguageProvider, useLanguage } from "@/lib/language-context"
 import { useAuth } from "@/lib/hooks-auth"
 import QueryClient from "@/lib/query-client"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { getSession } from "@/lib/auth"
 import { getAnalyses } from "@/lib/analyses-api"
 import { getAnalyticsSummary } from "@/lib/api"
+import { Menu, X } from "lucide-react"
 
 function NavigationContent() {
   const { data: authData } = useAuth()
@@ -24,6 +25,7 @@ function NavigationContent() {
   const pathname = usePathname()
   const router = useRouter()
   const queryClient = useQueryClient()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = useMemo(() => {
     const items = [{ href: "/", label: strings.home, private: false }]
@@ -131,8 +133,59 @@ function LayoutChrome({ children }: { children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-3">
             <LanguageSelector />
+            <button
+              type="button"
+              className="md:hidden inline-flex items-center justify-center rounded-lg p-2 text-slate-700 hover:text-slate-900 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </nav>
+        {mobileOpen && (
+          <div className="md:hidden border-t border-slate-200 bg-white/95 backdrop-blur shadow-sm">
+            <div className="mx-auto max-w-7xl px-4 py-4 space-y-3">
+              <div className="flex flex-col gap-2">
+                {navItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold ${
+                      pathname === item.href ? "bg-blue-50 text-blue-700" : "text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    {pathname === item.href && <span className="text-[10px] uppercase tracking-wide">active</span>}
+                  </Link>
+                ))}
+              </div>
+              <div className="flex flex-col gap-2">
+                {isAuthenticated ? (
+                  <LogoutButton />
+                ) : (
+                  <>
+                    <Link
+                      href="/signin"
+                      onClick={() => setMobileOpen(false)}
+                      className="rounded-lg border border-slate-300 px-3 py-2 text-center text-sm font-semibold text-slate-800 hover:border-blue-500 hover:text-blue-700"
+                    >
+                      {strings.signIn}
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setMobileOpen(false)}
+                      className="rounded-lg bg-blue-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm shadow-blue-200 hover:bg-blue-500"
+                    >
+                      {strings.signUp}
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {children}

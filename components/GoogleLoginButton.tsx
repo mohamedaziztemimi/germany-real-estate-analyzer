@@ -24,6 +24,20 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
   const initRef = useRef(false)
   const { mutate, isPending } = useGoogleSignInMutation()
 
+  // Handle redirect-based credential if present (fallback for popup blockers)
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    const params = new URLSearchParams(window.location.search)
+    const credential = params.get("credential")
+    if (credential) {
+      mutate({ credential, remember })
+      params.delete("credential")
+      const next = params.toString()
+      const newUrl = `${window.location.pathname}${next ? `?${next}` : ""}${window.location.hash || ""}`
+      window.history.replaceState({}, "", newUrl)
+    }
+  }, [mutate, remember])
+
   useEffect(() => {
     if (!clientId) {
       setError("Google sign-in is not configured.")
@@ -52,7 +66,7 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
       setError("Google is not ready yet. Please try again.")
       return
     }
-    if (!initRef.current) {
+    const initGoogle = (mode: "popup" | "redirect") => {
       window.google.accounts.id.initialize({
         client_id: clientId,
         callback: (response: any) => {
@@ -63,13 +77,21 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
           }
           mutate({ credential, remember })
         },
-        ux_mode: "popup",
+        ux_mode: mode,
+        login_uri: mode === "redirect" ? window.location.href : undefined,
       })
+    }
+
+    if (!initRef.current) {
+      initGoogle("popup")
       initRef.current = true
     }
     window.google.accounts.id.prompt((notification: any) => {
       if (notification.isNotDisplayed()) {
-        setError("Popup blocked. Please allow popups for Google sign-in.")
+        // Popup blocked: try redirect mode instead
+        initGoogle("redirect")
+        window.google.accounts.id.prompt()
+        setError(null)
       }
     })
   }
