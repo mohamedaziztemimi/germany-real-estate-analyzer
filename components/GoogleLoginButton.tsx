@@ -5,6 +5,7 @@ import { useGoogleSignInMutation } from "@/lib/hooks-auth"
 import { Button } from "@/components/ui/button"
 import { AlertCircle } from "lucide-react"
 import { nanoid } from "nanoid"
+import { useRouter } from "next/navigation"
 
 declare global {
   interface Window {
@@ -24,6 +25,7 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
   const [error, setError] = useState<string | null>(null)
   const initRef = useRef(false)
   const { mutate, isPending } = useGoogleSignInMutation()
+  const router = useRouter()
 
   // Handle redirect-based credential if present (fallback for popup blockers and direct OAuth redirect)
   useEffect(() => {
@@ -32,7 +34,15 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""))
     const credential = params.get("credential") || hashParams.get("credential") || hashParams.get("id_token")
     if (credential) {
-      mutate({ credential, remember })
+      mutate(
+        { credential, remember },
+        {
+          onSuccess: () => {
+            // Force a full reload to ensure session state propagates immediately after redirect.
+            window.location.assign("/")
+          },
+        },
+      )
       params.delete("credential")
       hashParams.delete("credential")
       hashParams.delete("id_token")
@@ -79,7 +89,14 @@ export function GoogleLoginButton({ remember = true, variant = "outline", fullWi
           setError("No credential returned. Please try again.")
           return
         }
-        mutate({ credential, remember })
+        mutate(
+          { credential, remember },
+          {
+            onSuccess: () => {
+              window.location.assign("/")
+            },
+          },
+        )
       },
       ux_mode: "redirect",
       login_uri: window.location.href,

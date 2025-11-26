@@ -10,7 +10,7 @@ export function LogoutButton() {
 
   const handleLogout = () => {
     signOut(undefined, {
-      onSuccess: () => {
+      onSettled: () => {
         router.push("/")
         router.refresh()
       },
