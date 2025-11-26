@@ -8,24 +8,44 @@ export const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? process.env
 )
 
 const TOKEN_STORAGE_KEY = "rea_access_token"
+const AUTH_PREF_KEY = "rea_auth_pref" // "remember" | "session"
 
 // Generate request ID for tracing
 export function generateRequestId(): string {
   return crypto.getRandomValues(new Uint8Array(16)).reduce((a, b) => a + b.toString(16).padStart(2, "0"), "")
 }
 
+function getAuthPreference(): "remember" | "session" {
+  if (typeof window === "undefined") return "remember"
+  const pref = window.localStorage.getItem(AUTH_PREF_KEY)
+  return pref === "session" ? "session" : "remember"
+}
+
 export function getAccessToken(): string | null {
   if (typeof window === "undefined") return null
+  // Prefer short-lived tokens stored per session, fall back to long-lived storage only when user opted to stay signed in.
+  const sessionToken = sessionStorage.getItem(TOKEN_STORAGE_KEY)
+  if (sessionToken) return sessionToken
   return localStorage.getItem(TOKEN_STORAGE_KEY)
 }
 
-export function setAccessToken(token: string | null) {
+export function setAccessToken(token: string | null, options: { remember?: boolean } = {}) {
   if (typeof window === "undefined") return
-  if (token) {
-    localStorage.setItem(TOKEN_STORAGE_KEY, token)
-  } else {
-    localStorage.removeItem(TOKEN_STORAGE_KEY)
+  // Clear both stores before writing so we don't accidentally keep a stale token.
+  sessionStorage.removeItem(TOKEN_STORAGE_KEY)
+  localStorage.removeItem(TOKEN_STORAGE_KEY)
+  if (!token) {
+    localStorage.removeItem(AUTH_PREF_KEY)
+    return
   }
+  const { remember = true } = options
+  if (remember) {
+    localStorage.setItem(TOKEN_STORAGE_KEY, token)
+    localStorage.setItem(AUTH_PREF_KEY, "remember")
+    return
+  }
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, token)
+  localStorage.setItem(AUTH_PREF_KEY, "session")
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit & { json?: unknown } = {}): Promise<T> {
@@ -45,10 +65,13 @@ export async function apiFetch<T>(path: string, options: RequestInit & { json?: 
     headers.set("Authorization", `Bearer ${token}`)
   }
 
+  const authPref = getAuthPreference()
+  const credentials: RequestCredentials = authPref === "session" ? "omit" : "include"
+
   const response = await fetch(`${API_BASE_URL}${path.startsWith("/") ? "" : "/"}${path}`, {
     ...options,
     headers,
-    credentials: "include",
+    credentials,
     body: options.json !== undefined ? JSON.stringify(options.json) : options.body,
   })
 

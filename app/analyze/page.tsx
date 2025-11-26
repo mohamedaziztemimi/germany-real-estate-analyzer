@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { PropertyForm } from "@/components/PropertyForm"
 import { DecisionCard } from "@/components/DecisionCard"
@@ -13,6 +13,7 @@ import { ExplanationsPanel } from "@/components/ExplanationsPanel"
 import { SaveAnalysisButton } from "@/components/SaveAnalysisButton"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { useAuth } from "@/lib/hooks-auth"
 import { useLanguage } from "@/lib/language-context"
 import type { PropertyPayload, PredictionResponse } from "@/lib/schemas"
@@ -248,28 +249,57 @@ export default function AnalyzePage() {
   const [result, setResult] = useState<PredictionResponse | null>(null)
   const [payload, setPayload] = useState<PropertyPayload | null>(null)
   const [submitted, setSubmitted] = useState(false)
+  const [hasSaved, setHasSaved] = useState(false)
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false)
+  const [savePromptDismissed, setSavePromptDismissed] = useState(false)
+  const [exitPromptOpen, setExitPromptOpen] = useState(false)
   const [formKey, setFormKey] = useState(0)
   const [projectionYears, setProjectionYears] = useState(5)
   const router = useRouter()
   const isAuthenticated = !!authData?.user
   const showAuthReminder = !authLoading && !isAuthenticated
+  const hasUnsavedAnalysis = submitted && result && payload && !hasSaved
 
   const handleFormSubmit = (formPayload: PropertyPayload, result: PredictionResponse) => {
     setPayload(formPayload)
     setResult(result)
     setSubmitted(true)
+    setHasSaved(false)
+    setSavePromptDismissed(false)
   }
 
   const handleSaveSuccess = (analysisId: string) => {
+    setHasSaved(true)
+    setSavePromptDismissed(true)
+    setSaveDialogOpen(false)
     router.push(`/analyses/${analysisId}`)
   }
 
   const handleNewAnalysis = () => {
+    if (hasUnsavedAnalysis) {
+      setExitPromptOpen(true)
+      return
+    }
+    setExitPromptOpen(false)
+    setSavePromptDismissed(false)
+    setHasSaved(false)
     setSubmitted(false)
     setResult(null)
     setPayload(null)
     setFormKey((prev) => prev + 1) // remount form to clear state and return to step 1
   }
+
+  // Warn on tab close if an analysis is ready but not saved.
+  useEffect(() => {
+    const handler = (event: BeforeUnloadEvent) => {
+      if (hasUnsavedAnalysis) {
+        event.preventDefault()
+        event.returnValue = ""
+      }
+    }
+    window.addEventListener("beforeunload", handler)
+    return () => window.removeEventListener("beforeunload", handler)
+  }, [hasUnsavedAnalysis])
 
   return (
     <main className="relative isolate min-h-screen overflow-hidden bg-gradient-to-b from-slate-50 via-white to-slate-100 text-slate-900">
@@ -309,8 +339,47 @@ export default function AnalyzePage() {
                   </div>
                 </div>
               )}
+              {hasUnsavedAnalysis && !savePromptDismissed && (
+                <Card className="flex flex-col gap-3 border-amber-200 bg-amber-50/70 p-4 shadow-sm shadow-amber-100 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-amber-900">{strings.savePromptTitle}</p>
+                    <p className="text-sm text-amber-800">
+                      {isAuthenticated ? strings.savePromptBody : strings.savePromptGuestBody}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {isAuthenticated ? (
+                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => setSaveDialogOpen(true)}>
+                        {strings.savePromptCta}
+                      </Button>
+                    ) : (
+                      <>
+                        <Link href="/signin?next=/analyze">
+                          <Button size="sm" variant="outline">
+                            {strings.signIn}
+                          </Button>
+                        </Link>
+                        <Link href="/signup">
+                          <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+                            {strings.signUp}
+                          </Button>
+                        </Link>
+                      </>
+                    )}
+                    <Button size="sm" variant="ghost" onClick={() => setSavePromptDismissed(true)}>
+                      {strings.savePromptDismiss}
+                    </Button>
+                  </div>
+                </Card>
+              )}
               <div className="flex gap-2">
-                <SaveAnalysisButton payload={payload} response={result} onSuccess={handleSaveSuccess} />
+                <SaveAnalysisButton
+                  payload={payload}
+                  response={result}
+                  onSuccess={handleSaveSuccess}
+                  open={saveDialogOpen}
+                  onOpenChange={setSaveDialogOpen}
+                />
                 <Button variant="outline" onClick={handleNewAnalysis}>
                   {strings.newAnalysis}
                 </Button>
@@ -362,6 +431,50 @@ export default function AnalyzePage() {
           )}
         </div>
       </div>
+      <Dialog open={exitPromptOpen} onOpenChange={setExitPromptOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{strings.exitPromptTitle}</DialogTitle>
+            <DialogDescription>{isAuthenticated ? strings.exitPromptBody : strings.exitPromptGuestBody}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setExitPromptOpen(false)
+                setSavePromptDismissed(true)
+                setHasSaved(false)
+                setSubmitted(false)
+                setResult(null)
+                setPayload(null)
+                setFormKey((prev) => prev + 1)
+              }}
+            >
+              {strings.exitPromptSkip}
+            </Button>
+            {isAuthenticated ? (
+              <Button
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={() => {
+                  setExitPromptOpen(false)
+                  setSaveDialogOpen(true)
+                }}
+              >
+                {strings.exitPromptSave}
+              </Button>
+            ) : (
+              <>
+                <Link href="/signin?next=/analyze">
+                  <Button variant="outline">{strings.signIn}</Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="bg-blue-600 hover:bg-blue-700">{strings.signUp}</Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </main>
   )
 }

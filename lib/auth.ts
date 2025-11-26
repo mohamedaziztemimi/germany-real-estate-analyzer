@@ -23,10 +23,10 @@ type AuthTokens = {
 
 type AuthLoginResponse = AuthTokens & { user?: User }
 
-async function resolveAuthUser(data: AuthLoginResponse): Promise<AuthResponse> {
+async function resolveAuthUser(data: AuthLoginResponse, remember = true): Promise<AuthResponse> {
   const token = data.access_token ?? data.token
   if (token) {
-    setAccessToken(token)
+    setAccessToken(token, { remember })
   }
 
   if (data.user) {
@@ -53,13 +53,21 @@ export async function completeSignup(email: string, code: string): Promise<AuthR
   return resolveAuthUser(data)
 }
 
-export async function signIn(email: string, password: string): Promise<AuthResponse> {
+export async function signIn(email: string, password: string, remember = true): Promise<AuthResponse> {
   const data = await apiFetch<AuthLoginResponse>("/auth/login", {
     method: "POST",
     json: { email, password },
   })
 
-  return resolveAuthUser(data)
+  return resolveAuthUser(data, remember)
+}
+
+export async function googleSignIn(credential: string, remember = true): Promise<AuthResponse> {
+  const data = await apiFetch<AuthLoginResponse>("/auth/google", {
+    method: "POST",
+    json: { credential },
+  })
+  return resolveAuthUser(data, remember)
 }
 
 export async function getSession(): Promise<AuthResponse> {

@@ -7,6 +7,7 @@ import Link from "next/link"
 import { Mail, Lock, KeyRound, Eye, EyeOff, ShieldCheck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useSignupStartMutation, useSignupCompleteMutation } from "@/lib/hooks-auth"
+import { GoogleLoginButton } from "@/components/GoogleLoginButton"
 
 function StatusMessage({ message, tone }: { message?: string; tone: "error" | "info" | "success" }) {
   if (!message) return null
@@ -202,6 +203,15 @@ export default function SignUpPage() {
             </div>
             <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:flex">
               <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+            </div>
+          </div>
+
+          <div className="mb-4 space-y-3">
+            <GoogleLoginButton fullWidth />
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span className="h-px flex-1 bg-slate-200" />
+              <span>or continue with email</span>
+              <span className="h-px flex-1 bg-slate-200" />
             </div>
           </div>
 

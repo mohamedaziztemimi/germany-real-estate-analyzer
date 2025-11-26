@@ -5,6 +5,8 @@ export type TranslationKeys =
   | "analyses"
   | "discussions"
   | "users"
+  | "dashboardKicker"
+  | "dashboardSubtitle"
   | "signIn"
   | "signUp"
   | "language"
@@ -51,6 +53,16 @@ export type TranslationKeys =
   | "dialogSaveNotes"
   | "dialogCancel"
   | "dialogSaveCta"
+  | "savePromptTitle"
+  | "savePromptBody"
+  | "savePromptGuestBody"
+  | "savePromptCta"
+  | "savePromptDismiss"
+  | "exitPromptTitle"
+  | "exitPromptBody"
+  | "exitPromptGuestBody"
+  | "exitPromptSkip"
+  | "exitPromptSave"
   | "stepLocation"
   | "stepProperty"
   | "stepListing"
@@ -94,6 +106,8 @@ export type TranslationKeys =
   | "analysesNew"
   | "analysesEmpty"
   | "analysesCta"
+  | "analysesKicker"
+  | "analysesSubtitle"
   | "analysesDecision"
   | "analysesROI"
   | "analysesConfidence"
@@ -154,6 +168,11 @@ export type TranslationKeys =
   | "chartYearUnit"
   | "chartToday"
   | "chartFuture"
+  | "ctaKicker"
+  | "ctaTitle"
+  | "ctaBody"
+  | "ctaDashboard"
+  | "ctaViewAnalyses"
 
 export type Language = "en" | "de"
 
@@ -161,6 +180,8 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
   en: {
     home: "Home",
     dashboard: "Dashboard",
+    dashboardKicker: "Overview",
+    dashboardSubtitle: "Key signals from your analyses in one place.",
     analyze: "Analyze",
     analyses: "Analyses",
     discussions: "Discussions",
@@ -212,6 +233,16 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     dialogSaveNotes: "Notes (optional)",
     dialogCancel: "Cancel",
     dialogSaveCta: "Save",
+    savePromptTitle: "Save this analysis before you go",
+    savePromptBody: "We'll keep it in your workspace so you can revisit the numbers and comments.",
+    savePromptGuestBody: "Create a free account to store this analysis and pick up where you left off.",
+    savePromptCta: "Save to workspace",
+    savePromptDismiss: "Maybe later",
+    exitPromptTitle: "Leave without saving?",
+    exitPromptBody: "Save this analysis so you can return to the projections and comments anytime.",
+    exitPromptGuestBody: "Sign in or create an account to keep this analysis. Otherwise, it will be lost.",
+    exitPromptSkip: "Discard and continue",
+    exitPromptSave: "Save before leaving",
     stepLocation: "Location",
     stepProperty: "Property and condition",
     stepListing: "Listing and market",
@@ -255,6 +286,8 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     analysesNew: "New analysis",
     analysesEmpty: "No analyses available yet.",
     analysesCta: "Analyze property",
+    analysesKicker: "Library",
+    analysesSubtitle: "Review and manage every saved analysis in one view.",
     analysesDecision: "Decision",
     analysesROI: "ROI",
     analysesConfidence: "Confidence",
@@ -318,10 +351,17 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     chartYearUnit: "yr",
     chartToday: "Today",
     chartFuture: "In {years} {unit}",
+    ctaKicker: "Ready to decide faster?",
+    ctaTitle: "Launch your next analysis in minutes.",
+    ctaBody: "Transparent drivers, ROI, and confidence in one view.",
+    ctaDashboard: "Go to dashboard",
+    ctaViewAnalyses: "View analyses",
   },
   de: {
     home: "Startseite",
     dashboard: "Dashboard",
+    dashboardKicker: "Überblick",
+    dashboardSubtitle: "Die wichtigsten Kennzahlen deiner Analysen auf einen Blick.",
     analyze: "Analysieren",
     analyses: "Analysen",
     discussions: "Diskussionen",
@@ -373,6 +413,16 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     dialogSaveNotes: "Notizen (optional)",
     dialogCancel: "Abbrechen",
     dialogSaveCta: "Speichern",
+    savePromptTitle: "Analyse speichern, bevor du gehst",
+    savePromptBody: "Wir legen sie in deinem Workspace ab, damit du Zahlen und Kommentare wiederfindest.",
+    savePromptGuestBody: "Erstelle ein kostenloses Konto, um diese Analyse zu sichern und später fortzufahren.",
+    savePromptCta: "Analyse speichern",
+    savePromptDismiss: "Später",
+    exitPromptTitle: "Ohne Speichern verlassen?",
+    exitPromptBody: "Speichere die Analyse, damit du jederzeit zu Projektionen und Notizen zurückkehren kannst.",
+    exitPromptGuestBody: "Melde dich an oder erstelle ein Konto, sonst geht diese Analyse verloren.",
+    exitPromptSkip: "Verwerfen und weiter",
+    exitPromptSave: "Vor dem Verlassen speichern",
     stepLocation: "Lage",
     stepProperty: "Objekt und Zustand",
     stepListing: "Inserat und Markt",
@@ -416,6 +466,8 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     analysesNew: "Neue Analyse",
     analysesEmpty: "Noch keine Analysen vorhanden.",
     analysesCta: "Objekt analysieren",
+    analysesKicker: "Bibliothek",
+    analysesSubtitle: "Alle gespeicherten Analysen an einem Ort pr\u00fcfen und verwalten.",
     analysesDecision: "Entscheidung",
     analysesROI: "Rendite",
     analysesConfidence: "Vertrauen",
@@ -479,5 +531,10 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     chartYearUnit: "J",
     chartToday: "Heute",
     chartFuture: "In {years} {unit}",
+    ctaKicker: "Bereit für schnellere Entscheidungen?",
+    ctaTitle: "Starte deine nächste Analyse in wenigen Minuten.",
+    ctaBody: "Transparente Treiber, Rendite und Sicherheit auf einen Blick.",
+    ctaDashboard: "Zum Dashboard",
+    ctaViewAnalyses: "Analysen ansehen",
   },
 }

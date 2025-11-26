@@ -25,18 +25,19 @@ function NavigationContent() {
   const router = useRouter()
   const queryClient = useQueryClient()
 
-  const navItems = useMemo(
-    () =>
-      [
-        { href: "/", label: strings.home, private: false },
-        { href: "/analyze", label: strings.analyze, private: false },
-        { href: "/dashboard", label: strings.dashboard, private: true },
-        { href: "/analyses", label: strings.analyses, private: true },
-        { href: "/shared", label: strings.discussions, private: true },
-        ...(isAdmin ? [{ href: "/admin/users", label: strings.users, private: true }] : []),
-      ].filter((item) => !item.private || isAuthenticated),
-    [isAdmin, isAuthenticated, strings],
-  )
+  const navItems = useMemo(() => {
+    const items = [{ href: "/", label: strings.home, private: false }]
+    if (!isAuthenticated) {
+      items.push({ href: "/analyze", label: strings.analyze, private: false })
+    }
+    items.push(
+      { href: "/dashboard", label: strings.dashboard, private: true },
+      { href: "/analyses", label: strings.analyses, private: true },
+      { href: "/shared", label: strings.discussions, private: true },
+      ...(isAdmin ? [{ href: "/admin/users", label: strings.users, private: true }] : []),
+    )
+    return items.filter((item) => !item.private || isAuthenticated)
+  }, [isAdmin, isAuthenticated, strings])
 
   useEffect(() => {
     navItems.forEach((item) => {

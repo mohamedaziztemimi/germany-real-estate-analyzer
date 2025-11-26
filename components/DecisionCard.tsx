@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import type { PredictionResponse } from "@/lib/schemas"
 import { useLanguage } from "@/lib/language-context"
+import { CountUp } from "@/components/CountUp"
 
 interface DecisionCardProps {
   prediction: PredictionResponse
@@ -27,7 +28,9 @@ export function DecisionCard({ prediction }: DecisionCardProps) {
       </Badge>
       <div className="mt-6">
         <p className="text-gray-600">{strings.confidenceLevel}</p>
-        <p className="text-4xl font-bold text-blue-600">{(prediction.confidence * 100).toFixed(1)}%</p>
+        <p className="text-4xl font-bold text-blue-600">
+          <CountUp value={prediction.confidence * 100} decimals={1} suffix="%" />
+        </p>
       </div>
     </Card>
   )

@@ -34,9 +34,9 @@ function AnalysisContent() {
       <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Library</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">{strings.analysesKicker}</p>
             <h1 className="text-3xl font-bold text-slate-900">{strings.analysesTitle}</h1>
-            <p className="text-sm text-slate-600">Review and manage every saved analysis in one view.</p>
+            <p className="text-sm text-slate-600">{strings.analysesSubtitle}</p>
           </div>
           <Link href="/analyze">
             <Button className="rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:-translate-y-0.5 hover:bg-blue-500 focus-visible:ring-2 focus-visible:ring-blue-300">

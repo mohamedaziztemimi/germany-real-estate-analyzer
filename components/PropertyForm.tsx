@@ -26,18 +26,52 @@ interface PropertyFormProps {
 export function PropertyForm({ onSuccess }: PropertyFormProps) {
   const { strings, language } = useLanguage()
   const steps = [
-    { id: 1, name: strings.stepLocation, fields: ["country", "plz", "city", "district", "property_type"] },
+    {
+      id: 1,
+      name: strings.stepLocation,
+      fields: ["country", "plz", "city", "district", "property_type"],
+    },
     {
       id: 2,
       name: strings.stepProperty,
-      fields: ["surface_m2", "rooms", "year_built", "floor", "condition", "has_elevator", "has_balcony"],
+      fields: [
+        "surface_m2",
+        "rooms",
+        "year_built",
+        "floor",
+        "condition",
+        "energy_efficiency_class",
+        "has_elevator",
+        "has_balcony",
+      ],
     },
     {
       id: 3,
       name: strings.stepListing,
-      fields: ["price_buy", "reno_cost", "listing_year", "listing_quarter", "greix_index", "hpi_index", "mortgage_rate_10y"],
+      fields: [
+        "price_buy",
+        "reno_cost",
+        "listing_year",
+        "listing_quarter",
+        "greix_index",
+        "hpi_index",
+        "mortgage_rate_10y",
+      ],
     },
-    { id: 4, name: strings.stepFinancing, fields: ["expected_rent_month", "holding_months", "financing", "fees"] },
+    {
+      id: 4,
+      name: strings.stepFinancing,
+      fields: [
+        "expected_rent_month",
+        "holding_months",
+        "financing.ltv",
+        "financing.fix_years",
+        "fees.grunderwerb_pct",
+        "fees.notary_pct",
+        "fees.agent_pct",
+        "fees.other",
+      ],
+    },
   ]
   const [currentStep, setCurrentStep] = useState(1)
   const renovationLevel: RenovationLevel = "standard"
@@ -55,6 +89,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
     formState: { errors, isValid, dirtyFields },
     watch,
     setValue,
+    trigger,
   } = useForm<PropertyPayload>({
     resolver: zodResolver(propertyPayloadSchema),
     mode: "onChange",
@@ -95,8 +130,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
   const pricePerM2Display = surfaceValue && priceBuyValue ? priceBuyValue / surfaceValue : 0
   const renoCostPerM2Display = surfaceValue ? (renoCostValue ?? 0) / surfaceValue : 0
   const propertyTypeOptions = [
-    { value: "apartment", label: language === "de" ? "Apartment" : "Apartment" },
-    { value: "wohnung", label: language === "de" ? "Wohnung" : "Apartment (Wohnung)" },
+    { value: "apartment", label: language === "de" ? "Wohnung" : "Apartment" },
     { value: "haus", label: language === "de" ? "Haus" : "House" },
     { value: "gewerbe", label: language === "de" ? "Gewerbe" : "Commercial" },
   ]
@@ -169,6 +203,14 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
   }, [surfaceValue, priceBuyValue, conditionValue, renovationLevel, renoCostValue, dirtyFields, setValue])
 
   const currentStepConfig = steps[currentStep - 1]
+  const validateAndAdvance = async () => {
+    const fields = currentStepConfig?.fields || []
+    const valid = await trigger(fields as any, { shouldFocus: true })
+    if (!valid) {
+      return
+    }
+    setCurrentStep((prev) => Math.min(steps.length, prev + 1))
+  }
 
   const onSubmit = (data: PropertyPayload) => {
     // Safety guard: never run analysis until user is on the final step
@@ -719,7 +761,7 @@ export function PropertyForm({ onSuccess }: PropertyFormProps) {
           </Button>
 
           {currentStep < steps.length ? (
-            <Button type="button" onClick={() => setCurrentStep(Math.min(steps.length, currentStep + 1))}>
+            <Button type="button" onClick={validateAndAdvance}>
               {strings.next}
             </Button>
           ) : (

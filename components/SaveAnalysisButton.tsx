@@ -18,16 +18,20 @@ interface SaveAnalysisButtonProps {
   payload: PropertyPayload
   response: PredictionResponse
   onSuccess?: (id: string) => void
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }
 
-export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysisButtonProps) {
+export function SaveAnalysisButton({ payload, response, onSuccess, open, onOpenChange }: SaveAnalysisButtonProps) {
   const { strings } = useLanguage()
   const { data: authData, isLoading: authLoading } = useAuth()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
   const [title, setTitle] = useState(`Analysis - ${payload.city}`)
   const [notes, setNotes] = useState("")
   const { mutate, isPending, error } = useAnalysesMutation()
   const isAuthenticated = !!authData?.user
+  const resolvedOpen = typeof open === "boolean" ? open : internalOpen
+  const setOpen = onOpenChange ?? setInternalOpen
 
   const handleSave = () => {
     mutate(
@@ -44,7 +48,7 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={resolvedOpen} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline">{strings.saveAnalysis}</Button>
       </DialogTrigger>
@@ -76,6 +80,7 @@ export function SaveAnalysisButton({ payload, response, onSuccess }: SaveAnalysi
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Add any notes about this analysis..."
                 rows={3}
+                className="hover:border-slate-200 focus-visible:ring-blue-200/70"
               />
             </div>
             {error && (

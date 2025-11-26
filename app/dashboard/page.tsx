@@ -1,6 +1,7 @@
 ﻿"use client"
 
 import { useState } from "react"
+import { motion } from "framer-motion"
 import { useAnalyticsSummary } from "@/lib/hooks"
 import { AuthGuard } from "@/components/AuthGuard"
 import { ChatDrawer } from "@/components/ChatDrawer"
@@ -10,6 +11,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { MessageSquare, AlertCircle, Target, TrendingUp, ShieldCheck, Percent } from "lucide-react"
 import Link from "next/link"
 import { useLanguage } from "@/lib/language-context"
+import { CountUp } from "@/components/CountUp"
+import { fadeUp, fadeScale, staggerChildren } from "@/lib/animations"
 
 function DashboardContent() {
   const [isChatOpen, setIsChatOpen] = useState(false)
@@ -24,9 +27,9 @@ function DashboardContent() {
       <div className="relative mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8 space-y-8">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Overview</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">{strings.dashboardKicker}</p>
             <h1 className="text-3xl font-bold text-slate-900">{strings.dashboardTitle}</h1>
-            <p className="text-sm text-slate-600">Key signals from your analyses in one place.</p>
+            <p className="text-sm text-slate-600">{strings.dashboardSubtitle}</p>
           </div>
           <Button
             onClick={() => setIsChatOpen(true)}
@@ -37,36 +40,50 @@ function DashboardContent() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <motion.div
+          variants={staggerChildren(0.06)}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
+        >
           {[
             {
               label: strings.totalRequests,
-              value: isLoading ? null : totalRequests.toLocaleString(),
+              value: isLoading ? null : totalRequests,
+              decimals: 0,
               icon: ShieldCheck,
               tone: "text-blue-700 bg-blue-50 ring-blue-100",
             },
             {
               label: strings.avgConfidence,
-              value: isLoading ? null : `${data?.avg_confidence ? (data.avg_confidence * 100).toFixed(1) : 0}%`,
+              value: isLoading ? null : (data?.avg_confidence ?? 0) * 100,
+              suffix: "%",
+              decimals: 1,
               icon: Target,
               tone: "text-emerald-700 bg-emerald-50 ring-emerald-100",
             },
             {
               label: strings.buyRate,
-              value: isLoading ? null : `${data?.buy_rate ? (data.buy_rate * 100).toFixed(1) : 0}%`,
+              value: isLoading ? null : (data?.buy_rate ?? 0) * 100,
+              suffix: "%",
+              decimals: 1,
               icon: TrendingUp,
               tone: "text-indigo-700 bg-indigo-50 ring-indigo-100",
             },
             {
               label: strings.avgRoi,
-              value: isLoading ? null : `${data?.avg_roi ? (data.avg_roi * 100).toFixed(2) : 0}%`,
+              value: isLoading ? null : (data?.avg_roi ?? 0) * 100,
+              suffix: "%",
+              decimals: 2,
               icon: Percent,
               tone: "text-amber-700 bg-amber-50 ring-amber-100",
             },
           ].map((metric) => {
             const Icon = metric.icon
             return (
-              <Card
+              <motion.div
+                variants={fadeScale}
                 key={metric.label}
                 className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm shadow-slate-200/80 transition hover:-translate-y-1 hover:shadow-lg"
               >
@@ -79,15 +96,22 @@ function DashboardContent() {
                 {isLoading ? (
                   <Skeleton className="mt-3 h-8 w-20" />
                 ) : (
-                  <p className="mt-3 text-3xl font-bold text-slate-900">{metric.value}</p>
+                  <p className="mt-3 text-3xl font-bold text-slate-900">
+                    <CountUp value={metric.value ?? 0} decimals={metric.decimals ?? 0} suffix={metric.suffix || ""} />
+                  </p>
                 )}
                 <div className="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                  <span className="block h-full w-full origin-left scale-x-0 rounded-full bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-600 transition group-hover:scale-x-100" />
+                  <motion.span
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ duration: 0.9, ease: "easeOut" }}
+                    className="block h-full w-full origin-left rounded-full bg-gradient-to-r from-blue-400 via-emerald-400 to-blue-600"
+                  />
                 </div>
-              </Card>
+              </motion.div>
             )
           })}
-        </div>
+        </motion.div>
 
         {showEmptyState && (
           <Card className="mt-6 flex flex-col items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white p-12 text-center shadow-sm shadow-slate-200/80">

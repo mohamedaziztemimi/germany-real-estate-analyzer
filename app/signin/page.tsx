@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Mail, Lock, Eye, EyeOff, ShieldCheck } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useSignInMutation } from "@/lib/hooks-auth"
+import { GoogleLoginButton } from "@/components/GoogleLoginButton"
 
 function StatusMessage({ message, tone }: { message?: string; tone: "error" | "info" }) {
   if (!message) return null
@@ -124,6 +125,7 @@ function PasswordField({
 function SignInContent() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
   const { mutate, isPending, error } = useSignInMutation()
@@ -135,7 +137,7 @@ function SignInContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     mutate(
-      { email, password },
+      { email, password, remember: rememberMe },
       {
         onSuccess: () => {
           const next = searchParams.get("next") || "/"
@@ -150,14 +152,23 @@ function SignInContent() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(37,99,235,0.10),transparent_32%),radial-gradient(circle_at_82%_10%,rgba(16,185,129,0.12),transparent_28%),radial-gradient(circle_at_60%_85%,rgba(59,130,246,0.10),transparent_30%)]" />
       <div className="relative mx-auto flex min-h-screen w-full max-w-5xl items-center justify-center px-4 py-12 sm:px-8">
         <div className="relative w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-8 shadow-2xl shadow-slate-200/80">
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <div className="space-y-1">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Welcome back</p>
-              <h1 className="text-2xl font-semibold text-slate-900">Sign in to your workspace</h1>
-              <p className="text-sm text-slate-600">Access your analyses, discussions, and saved properties.</p>
-            </div>
-            <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:flex">
-              <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+        <div className="mb-6 flex items-center justify-between gap-3">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-700">Welcome back</p>
+            <h1 className="text-2xl font-semibold text-slate-900">Sign in to your workspace</h1>
+            <p className="text-sm text-slate-600">Access your analyses, discussions, and saved properties.</p>
+          </div>
+          <div className="hidden h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-blue-100 sm:flex">
+            <ShieldCheck className="h-6 w-6" aria-hidden="true" />
+          </div>
+        </div>
+
+          <div className="space-y-3">
+            <GoogleLoginButton fullWidth />
+            <div className="flex items-center gap-3 text-xs text-slate-500">
+              <span className="h-px flex-1 bg-slate-200" />
+              <span>or sign in with email</span>
+              <span className="h-px flex-1 bg-slate-200" />
             </div>
           </div>
 
@@ -190,6 +201,8 @@ function SignInContent() {
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-2 focus:ring-blue-300"
+                  checked={rememberMe}
+                  onChange={(event) => setRememberMe(event.target.checked)}
                 />
                 Keep me signed in on this device
               </label>

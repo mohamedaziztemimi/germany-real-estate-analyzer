@@ -5,6 +5,7 @@ import {
   getSession,
   signIn,
   signOut,
+  googleSignIn,
   requestPasswordReset,
   resetPassword,
   startSignup,
@@ -26,7 +27,8 @@ export function useSignInMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) => signIn(email, password),
+    mutationFn: ({ email, password, remember }: { email: string; password: string; remember: boolean }) =>
+      signIn(email, password, remember),
     onSuccess: (data) => {
       queryClient.clear()
       queryClient.setQueryData(["auth", "session"], data)
@@ -37,6 +39,18 @@ export function useSignInMutation() {
 export function useSignUpMutation() {
   return useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) => startSignup(email, password),
+  })
+}
+
+export function useGoogleSignInMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ credential, remember }: { credential: string; remember?: boolean }) =>
+      googleSignIn(credential, remember ?? true),
+    onSuccess: (data) => {
+      queryClient.clear()
+      queryClient.setQueryData(["auth", "session"], data)
+    },
   })
 }
 

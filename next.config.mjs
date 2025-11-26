@@ -1,13 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
   images: {
     unoptimized: true,
+  },
+  turbopack: {
+    // Pin the workspace root to this project to avoid auto-detection warnings with multiple lockfiles.
+    root: ".",
   },
   async rewrites() {
     return [
