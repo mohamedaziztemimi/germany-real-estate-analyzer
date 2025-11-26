@@ -129,6 +129,7 @@ export default function SignUpPage() {
   const [step, setStep] = useState<1 | 2>(1)
   const [passwordError, setPasswordError] = useState("")
   const [codeError, setCodeError] = useState("")
+  const [infoMessage, setInfoMessage] = useState("")
   const router = useRouter()
   const { mutate: startSignup, isPending: isSendingCode, error: startError } = useSignupStartMutation()
   const { mutate: completeSignup, isPending: isVerifying, error: verifyError } = useSignupCompleteMutation()
@@ -151,8 +152,20 @@ export default function SignUpPage() {
     startSignup(
       { email, password },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           setStep(2)
+          if (data?.code) {
+            setCode(data.code)
+            setInfoMessage(`We generated a code for you: ${data.code}. Finishing signup...`)
+            completeSignup(
+              { email, code: data.code },
+              {
+                onSuccess: () => router.replace("/"),
+              },
+            )
+          } else {
+            setInfoMessage("Enter the 6-digit code you receive to finish signing up.")
+          }
         },
       },
     )
@@ -212,6 +225,7 @@ export default function SignUpPage() {
             {verifyError && step === 2 && <StatusMessage message={verifyError.message} tone="error" />}
             {passwordError && step === 1 && <StatusMessage message={passwordError} tone="error" />}
             {codeError && step === 2 && <StatusMessage message={codeError} tone="error" />}
+            {infoMessage && <StatusMessage message={infoMessage} tone="info" />}
 
             {step === 1 ? (
               <>
