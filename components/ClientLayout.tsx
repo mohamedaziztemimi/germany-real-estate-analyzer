@@ -76,8 +76,8 @@ function NavigationContent() {
       <div className="flex items-center gap-3 pl-2">
         {isAuthenticated && <LogoutButton />}
         {!isAuthenticated && (
-          <>
-            <Link href="/signin" className="text-slate-700 hover:text-blue-700 transition">
+          <div className="flex flex-col items-end gap-1 text-right">
+            <Link href="/signin" className="text-xs font-semibold text-slate-600 hover:text-blue-700 transition">
               {strings.signIn}
             </Link>
             <Link
@@ -86,7 +86,7 @@ function NavigationContent() {
             >
               {strings.signUp}
             </Link>
-          </>
+          </div>
         )}
       </div>
     </div>
