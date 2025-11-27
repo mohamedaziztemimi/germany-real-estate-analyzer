@@ -1,0 +1,8 @@
+packages:
+  - .
+
+# Explicitly approve native build scripts so pnpm@10 won't skip them in CI
+onlyBuiltDependencies:
+  - "@tailwindcss/oxide"
+  - core-js
+  - sharp
