@@ -32,6 +32,9 @@ export function DecisionCard({ prediction }: DecisionCardProps) {
           <CountUp value={prediction.confidence * 100} decimals={1} suffix="%" />
         </p>
       </div>
+      {prediction.summary_text && (
+        <p className="mt-4 text-sm text-slate-700 leading-relaxed max-w-2xl mx-auto">{prediction.summary_text}</p>
+      )}
     </Card>
   )
 }

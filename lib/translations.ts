@@ -82,6 +82,27 @@ export type TranslationKeys =
   | "listingYear"
   | "listingQuarter"
   | "priceBuy"
+  | "purchaseCosts"
+  | "conditionScoreLabel"
+  | "macroLocationScoreLabel"
+  | "microLocationScoreLabel"
+  | "vacancyRiskLabel"
+  | "currentRentLabel"
+  | "marketRentLabel"
+  | "rentGrowthLabel"
+  | "operatingCostLabel"
+  | "capexPerYearLabel"
+  | "oneTimeCapexLabel"
+  | "interestRateLabel"
+  | "principalRateLabel"
+  | "equityLabel"
+  | "marketPriceLabel"
+  | "strategyScoreLabel"
+  | "annualAppreciationLabel"
+  | "holdingYearsLabel"
+  | "renovationToggleTitle"
+  | "renovationToggleYes"
+  | "renovationToggleNo"
   | "renoCost"
   | "greixIndex"
   | "hpiIndex"
@@ -141,12 +162,37 @@ export type TranslationKeys =
   | "decisionBuy"
   | "decisionDontBuy"
   | "estimatedROI"
+  | "totalROI"
+  | "annualROI"
+  | "futureSalePrice"
+  | "cashflowYearOne"
   | "capRate"
   | "capRateNA"
   | "pricePerM2PostReno"
   | "kpiRoiDetail"
+  | "kpiTotalRoiDetail"
+  | "kpiCashflowDetail"
   | "kpiCapDetail"
   | "kpiPriceDetail"
+  | "returnProfileTitle"
+  | "exitAndUpliftTitle"
+  | "riskLocationTitle"
+  | "projectedSaleValue"
+  | "renovationUplift"
+  | "vacancyRisk"
+  | "macroScore"
+  | "microScore"
+  | "cashflowByYear"
+  | "cashflowSubtitle"
+  | "leverageImpact"
+  | "interestPerYear"
+  | "principalPerYear"
+  | "yearLabel"
+  | "priceAppreciationTitle"
+  | "cashflowYearsTitle"
+  | "priceComparisonTitle"
+  | "totalInvestedLabel"
+  | "netRentYear1Label"
   | "summaryTitle"
   | "summaryPara1"
   | "summaryPara2"
@@ -253,7 +299,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     propertyType: "Property type",
     condition: "Condition",
     energyClass: "Energy efficiency class",
-    surface: "Surface area (sqm)",
+    surface: "Surface area (m²)",
     rooms: "Rooms",
     yearBuilt: "Year built",
     floor: "Floor",
@@ -261,15 +307,33 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     balcony: "Balcony / Terrace",
     listingYear: "Listing year",
     listingQuarter: "Listing quarter (1-4)",
-    priceBuy: "Purchase price (EUR)",
+    priceBuy: "Purchase price",
+    purchaseCosts: "Purchase costs (%)",
+    conditionScoreLabel: "Condition score",
+    macroLocationScoreLabel: "Macro location score",
+    microLocationScoreLabel: "Micro location score",
+    vacancyRiskLabel: "Vacancy risk score",
     renoCost: "Renovation cost (EUR)",
     greixIndex: "GREIX index",
     hpiIndex: "HPI index",
     mortgageRate: "Mortgage rate 10y",
     pricePerM2: "Price per sqm",
     renoPerM2: "Renovation cost per sqm",
+    currentRentLabel: "Current rent (per year)",
+    marketRentLabel: "Market rent (per year)",
+    rentGrowthLabel: "Rent growth rate (%)",
     rentMonth: "Expected rent per month (EUR, optional)",
     holdingMonths: "Holding period (months)",
+    operatingCostLabel: "Operating cost rate",
+    capexPerYearLabel: "CAPEX per year",
+    oneTimeCapexLabel: "One-time CAPEX",
+    interestRateLabel: "Interest rate (%)",
+    principalRateLabel: "Principal rate (%)",
+    equityLabel: "Equity",
+    marketPriceLabel: "Market price per m²",
+    strategyScoreLabel: "Strategy score (1–5)",
+    annualAppreciationLabel: "Annual appreciation rate (%)",
+    holdingYearsLabel: "Holding years",
     financingTitle: "Financing",
     feesTitle: "Fees",
     ltv: "Loan-to-value (LTV)",
@@ -321,12 +385,37 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     decisionBuy: "Buy",
     decisionDontBuy: "Do not buy",
     estimatedROI: "Estimated ROI",
+    totalROI: "Total ROI",
+    annualROI: "Annual ROI",
+    futureSalePrice: "Future sale price",
+    cashflowYearOne: "Year 1 cashflow",
     capRate: "Cap rate",
     capRateNA: "N/A",
     pricePerM2PostReno: "Price per sqm (post-reno)",
     kpiRoiDetail: "Net gain relative to the capital deployed.",
+    kpiTotalRoiDetail: "Total return over the holding period.",
+    kpiCashflowDetail: "Net operating cash in the first year.",
     kpiCapDetail: "Annual rent divided by the invested amount.",
     kpiPriceDetail: "Projected resale value per square metre after works.",
+    returnProfileTitle: "Return profile",
+    exitAndUpliftTitle: "Exit & uplift",
+    riskLocationTitle: "Risk & location",
+    projectedSaleValue: "Projected sale value",
+    renovationUplift: "Renovation uplift",
+    vacancyRisk: "Vacancy risk",
+    macroScore: "Macro",
+    microScore: "Micro",
+    cashflowByYear: "Cashflow by year",
+    cashflowSubtitle: "Includes rent growth & capex",
+    leverageImpact: "Leverage impact",
+    interestPerYear: "Interest / yr",
+    principalPerYear: "Principal / yr",
+    yearLabel: "Year {year}",
+    priceAppreciationTitle: "Price appreciation",
+    cashflowYearsTitle: "Cashflow over years",
+    priceComparisonTitle: "Price per m\u00b2 comparison",
+    totalInvestedLabel: "Total invested",
+    netRentYear1Label: "Net rent year 1",
     summaryTitle: "Summary and assumptions",
     summaryPara1:
       "We expect the renovated place to be worth about {postReno} today, and roughly {futureSale} after the planned hold.",
@@ -356,6 +445,9 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     ctaBody: "Transparent drivers, ROI, and confidence in one view.",
     ctaDashboard: "Go to dashboard",
     ctaViewAnalyses: "View analyses",
+    renovationToggleTitle: "Renovation planned?",
+    renovationToggleYes: "Yes",
+    renovationToggleNo: "No",
   },
   de: {
     home: "Startseite",
@@ -433,7 +525,7 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     propertyType: "Objektart",
     condition: "Zustand",
     energyClass: "Energieeffizienzklasse",
-    surface: "Flaeche (qm)",
+    surface: "Wohnfläche (m²)",
     rooms: "Zimmer",
     yearBuilt: "Baujahr",
     floor: "Etage",
@@ -441,15 +533,33 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     balcony: "Balkon / Terrasse",
     listingYear: "Inseratsjahr",
     listingQuarter: "Inseratsquartal (1-4)",
-    priceBuy: "Kaufpreis (EUR)",
+    priceBuy: "Kaufpreis",
+    purchaseCosts: "Kaufnebenkosten (%)",
+    conditionScoreLabel: "Zustand",
+    macroLocationScoreLabel: "Makrolage (1–5)",
+    microLocationScoreLabel: "Mikrolage (1–5)",
+    vacancyRiskLabel: "Leerstandsrisiko (1–5)",
     renoCost: "Sanierungskosten (EUR)",
     greixIndex: "GREIX-Index",
     hpiIndex: "HPI-Index",
     mortgageRate: "Hypothekenzins 10J",
-    pricePerM2: "Preis pro qm",
+    pricePerM2: "Preis pro m²",
     renoPerM2: "Sanierungskosten pro qm",
+    currentRentLabel: "Aktuelle Jahresnettomiete",
+    marketRentLabel: "Marktübliche Jahresnettomiete",
+    rentGrowthLabel: "Mietsteigerung pro Jahr (%)",
     rentMonth: "Erwartete Monatsmiete (EUR, optional)",
     holdingMonths: "Haltezeit (Monate)",
+    operatingCostLabel: "Bewirtschaftungskosten",
+    capexPerYearLabel: "Langfristige Instandhaltung (€/Jahr)",
+    oneTimeCapexLabel: "Einmalige Sanierungskosten",
+    interestRateLabel: "Sollzins (%)",
+    principalRateLabel: "Anfangstilgung (%)",
+    equityLabel: "Eigenkapital",
+    marketPriceLabel: "Marktpreis pro m²",
+    strategyScoreLabel: "Strategie-Passung (1–5)",
+    annualAppreciationLabel: "Wertsteigerung pro Jahr (%)",
+    holdingYearsLabel: "Haltezeit (Jahre)",
     financingTitle: "Finanzierung",
     feesTitle: "Kaufnebenkosten",
     ltv: "Beleihungsauslauf (LTV)",
@@ -501,12 +611,37 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     decisionBuy: "Kaufen",
     decisionDontBuy: "Nicht kaufen",
     estimatedROI: "Erwartete Rendite",
+    totalROI: "Gesamtrendite",
+    annualROI: "Jaehrliche Rendite",
+    futureSalePrice: "Zukuenftiger Verkaufspreis",
+    cashflowYearOne: "Cashflow Jahr 1",
     capRate: "Kapitalrendite (Cap Rate)",
     capRateNA: "k. A.",
     pricePerM2PostReno: "Preis pro qm (nach Sanierung)",
     kpiRoiDetail: "Netto-Ertrag im Verhaeltnis zum eingesetzten Kapital.",
+    kpiTotalRoiDetail: "Gesamtrendite ueber die Haltedauer.",
+    kpiCashflowDetail: "Operativer Cashflow im ersten Jahr.",
     kpiCapDetail: "Jahresmiete geteilt durch die Investitionssumme.",
     kpiPriceDetail: "Erwarteter Wiederverkaufswert pro Quadratmeter nach der Sanierung.",
+    returnProfileTitle: "Renditeprofil",
+    exitAndUpliftTitle: "Exit & Uplift",
+    riskLocationTitle: "Risiko & Lage",
+    projectedSaleValue: "Prognostizierter Verkaufspreis",
+    renovationUplift: "Sanierungs-Uplift",
+    vacancyRisk: "Leerstandsrisiko",
+    macroScore: "Makro",
+    microScore: "Mikro",
+    cashflowByYear: "Cashflow nach Jahren",
+    cashflowSubtitle: "Mit Mietwachstum & Capex",
+    leverageImpact: "Leverage-Effekt",
+    interestPerYear: "Zins / Jahr",
+    principalPerYear: "Tilgung / Jahr",
+    yearLabel: "Jahr {year}",
+    priceAppreciationTitle: "Wertsteigerung",
+    cashflowYearsTitle: "Cashflow ueber Jahre",
+    priceComparisonTitle: "Preisvergleich pro qm",
+    totalInvestedLabel: "Gesamtinvest",
+    netRentYear1Label: "Nettomiete Jahr 1",
     summaryTitle: "Zusammenfassung und Annahmen",
     summaryPara1:
       "Nach der Sanierung erwarten wir einen Wert von rund {postReno} und nach der geplanten Haltedauer etwa {futureSale}.",
@@ -536,5 +671,8 @@ export const translations: Record<Language, Record<TranslationKeys, string>> = {
     ctaBody: "Transparente Treiber, Rendite und Sicherheit auf einen Blick.",
     ctaDashboard: "Zum Dashboard",
     ctaViewAnalyses: "Analysen ansehen",
+    renovationToggleTitle: "Sanierung geplant?",
+    renovationToggleYes: "Ja",
+    renovationToggleNo: "Nein",
   },
 }

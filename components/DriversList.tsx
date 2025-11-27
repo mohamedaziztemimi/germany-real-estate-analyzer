@@ -22,6 +22,18 @@ const driverMeta: Record<string, { label: string; detail: string }> = {
     label: "Renovation cost intensity",
     detail: "Impact of works budget per square metre on overall returns.",
   },
+  vacancy_risk_score: {
+    label: "Vacancy risk score",
+    detail: "Stability of tenant demand based on market indices.",
+  },
+  macro_location_score: {
+    label: "Macro location",
+    detail: "City/region attractiveness and liquidity.",
+  },
+  micro_location_score: {
+    label: "Micro location",
+    detail: "Street and neighbourhood quality signal.",
+  },
 }
 
 const percentFormatter = new Intl.NumberFormat("de-DE", {
